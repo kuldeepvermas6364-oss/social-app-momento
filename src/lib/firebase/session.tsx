@@ -12,7 +12,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import {createMomentoAccount, type CreateMomentoAccountInput} from './account'
 import {
   type FirebaseAuthUser,
-  getFirebaseAuthUser,
   refreshFirebaseToken,
   sendFirebasePasswordResetEmail,
   signInWithFirebase,
@@ -157,21 +156,14 @@ export function FirebaseAuthProvider({children}: React.PropsWithChildren<{}>) {
       ) {
         throw new Error('Please sign in to continue.')
       }
-      const profile = await getFirebaseAuthUser(refreshed.id_token)
-      if (
-        generation !== sessionGenerationRef.current ||
-        sessionRef.current !== active
-      ) {
-        throw new Error('Please sign in to continue.')
-      }
       const user: FirebaseAuthUser = {
         localId: refreshed.user_id,
-        email: profile.email,
+        email: active.user.email,
         idToken: refreshed.id_token,
         refreshToken: refreshed.refresh_token,
         expiresIn: refreshed.expires_in,
-        displayName: profile.displayName,
-        photoUrl: profile.photoUrl,
+        displayName: active.user.displayName,
+        photoUrl: active.user.photoUrl,
         registered: true,
       }
       const nextSession = createActiveSession(user)
@@ -260,15 +252,12 @@ export function FirebaseAuthProvider({children}: React.PropsWithChildren<{}>) {
         }
 
         const refreshed = await refreshFirebaseToken(stored.refreshToken)
-        const profile = await getFirebaseAuthUser(refreshed.id_token)
         const user: FirebaseAuthUser = {
           localId: refreshed.user_id,
-          email: profile.email || stored.email,
+          email: stored.email,
           idToken: refreshed.id_token,
           refreshToken: refreshed.refresh_token,
           expiresIn: refreshed.expires_in,
-          displayName: profile.displayName,
-          photoUrl: profile.photoUrl,
           registered: true,
         }
 
