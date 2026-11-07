@@ -12,6 +12,7 @@ import {
 import {type BlobRef, type Client} from '@atproto/lex'
 import {type AtIdentifierString} from '@atproto/syntax'
 import {type I18n} from '@lingui/core'
+import {useLingui} from '@lingui/react'
 import {Image} from 'expo-image'
 import {
   type ImagePickerAsset,
