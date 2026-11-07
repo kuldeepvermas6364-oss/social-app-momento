@@ -24,15 +24,17 @@ function databaseUrl(path: string, idToken: string): string {
 }
 
 async function parseDatabaseResponse<T>(response: Response): Promise<T> {
-  const data = (await response.json()) as T & FirebaseDatabaseError
+  const data = (await response.json().catch(() => null)) as
+    | (T & FirebaseDatabaseError)
+    | null
   if (!response.ok) {
     throw new Error(
-      typeof data.error === 'string'
+      data && typeof data.error === 'string'
         ? data.error
         : 'Unable to save your Momento profile. Please try again.',
     )
   }
-  return data
+  return data as T
 }
 
 /**
