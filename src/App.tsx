@@ -14,8 +14,8 @@ import {BottomSheetProvider} from '@bsky.app/bottom-sheet'
 import {BackgroundNotificationPreferencesProvider} from '@bsky.app/expo-background-notification-handler/src/BackgroundNotificationHandlerProvider'
 import {useLingui} from '@lingui/react/macro'
 
-import {FirebaseAuthProvider, useFirebaseAuth} from '#/lib/firebase/session'
 import {getAccountCacheScope} from '#/lib/firebase/cache-scope'
+import {FirebaseAuthProvider, useFirebaseAuth} from '#/lib/firebase/session'
 import {Provider as HideBottomBarBorderProvider} from '#/lib/hooks/useHideBottomBarBorder'
 import {QueryProvider} from '#/lib/react-query'
 import {ThemeProvider} from '#/lib/ThemeContext'
@@ -149,7 +149,10 @@ function InnerApp() {
                   // Resets the entire tree below when it changes:
                   key={cacheScope}>
                   <AnalyticsFeaturesContext>
-                    <QueryProvider currentDid={currentAccount?.did} cacheScope={cacheScope}>
+                    <QueryProvider
+                      currentDid={currentAccount?.did}
+                      cacheScope={cacheScope}>
+
                       <BetaUserStorageSync />
                       <PolicyUpdateOverlayProvider>
                         <LiveEventsProvider>
