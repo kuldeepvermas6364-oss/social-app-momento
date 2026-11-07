@@ -110,7 +110,10 @@ function InnerApp() {
   const {currentUser, isReady: isFirebaseReady} = useFirebaseAuth()
   // Firebase UIDs and legacy AT Protocol DIDs are separate identity domains.
   // Give each signed-in Firebase account its own persistent query-cache namespace.
-  const cacheScope = getAccountCacheScope(currentUser?.localId, currentAccount?.did)
+  const cacheScope = getAccountCacheScope(
+    currentUser?.localId,
+    currentAccount?.did,
+  )
   const theme = useColorModeTheme()
   const {t: l} = useLingui()
   const hasCheckedLanding = useLandingEntry()
