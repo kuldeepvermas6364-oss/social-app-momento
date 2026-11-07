@@ -1,4 +1,3 @@
-import {useMemo} from 'react'
 import {
   useMutation,
   useQuery,
@@ -27,14 +26,13 @@ export function useStoriesQuery() {
   const followsQuery = useProfileFollowsQuery(currentAccount?.did, {
     limit: 30,
   })
-  const authorDids = useMemo(() => {
-    const followed = followsQuery.data?.pages.flatMap(page =>
+  const followed =
+    followsQuery.data?.pages.flatMap(page =>
       page.follows.map(profile => profile.did),
     ) ?? []
-    return currentAccount?.did
-      ? [currentAccount.did, ...followed]
-      : []
-  }, [currentAccount?.did, followsQuery.data])
+  const authorDids = currentAccount?.did
+    ? [currentAccount.did, ...followed]
+    : []
 
   return useQuery({
     queryKey: [...STORIES_QUERY_KEY, authorDids],
