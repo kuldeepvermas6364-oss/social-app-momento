@@ -236,36 +236,36 @@ function App() {
     <FirebaseAuthProvider>
       <Geo.Provider>
         <AppConfigProvider>
-        <A11yProvider>
-          <KeyboardControllerProvider preload={false}>
-            <OnboardingProvider>
-              <AnalyticsContext>
-                <SessionProvider>
-                  <PrefsStateProvider>
-                    <I18nProvider>
-                      <ShellStateProvider>
-                        <DialogStateProvider>
-                          <LightboxStateProvider>
-                            <PortalProvider>
-                              <BottomSheetProvider>
-                                <LandingProvider>
-                                  <SafeAreaProvider
-                                    initialMetrics={initialWindowMetrics}>
-                                    <InnerApp />
-                                  </SafeAreaProvider>
-                                </LandingProvider>
-                              </BottomSheetProvider>
-                            </PortalProvider>
-                          </LightboxStateProvider>
-                        </DialogStateProvider>
-                      </ShellStateProvider>
-                    </I18nProvider>
-                  </PrefsStateProvider>
-                </SessionProvider>
-              </AnalyticsContext>
-            </OnboardingProvider>
-          </KeyboardControllerProvider>
-        </A11yProvider>
+          <A11yProvider>
+            <KeyboardControllerProvider preload={false}>
+              <OnboardingProvider>
+                <AnalyticsContext>
+                  <SessionProvider>
+                    <PrefsStateProvider>
+                      <I18nProvider>
+                        <ShellStateProvider>
+                          <DialogStateProvider>
+                            <LightboxStateProvider>
+                              <PortalProvider>
+                                <BottomSheetProvider>
+                                  <LandingProvider>
+                                    <SafeAreaProvider
+                                      initialMetrics={initialWindowMetrics}>
+                                      <InnerApp />
+                                    </SafeAreaProvider>
+                                  </LandingProvider>
+                                </BottomSheetProvider>
+                              </PortalProvider>
+                            </LightboxStateProvider>
+                          </DialogStateProvider>
+                        </ShellStateProvider>
+                      </I18nProvider>
+                    </PrefsStateProvider>
+                  </SessionProvider>
+                </AnalyticsContext>
+              </OnboardingProvider>
+            </KeyboardControllerProvider>
+          </A11yProvider>
         </AppConfigProvider>
       </Geo.Provider>
     </FirebaseAuthProvider>
