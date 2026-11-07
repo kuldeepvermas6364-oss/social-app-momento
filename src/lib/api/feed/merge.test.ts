@@ -4,12 +4,27 @@ import {type Client} from '@atproto/lex'
 import {DISCOVER_FEED_URI} from '#/lib/constants'
 import {getContentLanguages} from '#/state/preferences/languages'
 import {app} from '#/lexicons'
+import {app} from '#/lexicons'
 import {device} from '#/storage'
 import {MergeFeedAPI} from './merge'
 
 const post = {} as app.bsky.feed.defs.FeedViewPost
 
 describe('MergeFeedAPI', () => {
+  it('returns undefined when the following timeline is empty', async () => {
+    const call = jest.fn().mockResolvedValue({feed: []})
+    const api = new MergeFeedAPI({
+      client: {call} as unknown as Client,
+      feedParams: {},
+      feedTuners: [],
+    })
+
+    await expect(api.peekLatest()).resolves.toBeUndefined()
+    expect(call).toHaveBeenCalledWith(app.bsky.feed.getTimeline, {
+      limit: 1,
+    })
+  })
+
   it('sends platform and service geolocation only to Bluesky-owned merged sources', async () => {
     const get = jest.spyOn(device, 'get').mockReturnValue({
       countryCode: 'JP',
