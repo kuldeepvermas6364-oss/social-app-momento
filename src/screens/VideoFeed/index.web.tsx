@@ -1,5 +1,6 @@
 import {createElement, useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {FlatList, Pressable, View, useWindowDimensions} from 'react-native'
+import {useSafeAreaInsets} from 'react-native-safe-area-context'
 import {useIsFocused, useNavigation, useRoute, type RouteProp} from '@react-navigation/native'
 
 import {type CommonNavigatorParams, type NavigationProp} from '#/lib/routes/types'
@@ -9,7 +10,7 @@ import {useProfileShadow} from '#/state/cache/profile-shadow'
 import {usePostLikeMutationQueue} from '#/state/queries/post'
 import {usePostFeedQuery} from '#/state/queries/post-feed'
 import {useProfileFollowMutationQueue} from '#/state/queries/profile'
-import {useSession} from '#/state/session'
+import {useRequireAuth, useSession} from '#/state/session'
 import {app} from '#/lexicons'
 import * as bsky from '#/types/bsky'
 import {Text} from '#/components/Typography'
@@ -18,6 +19,8 @@ import {VideoEmbedInnerWeb} from '#/components/Post/Embed/VideoEmbed/VideoEmbedI
 import * as ReportDialogMetadataContext from '#/components/moderation/ReportDialog/ReportDialogMetadataContext'
 import {ErrorBoundary} from '#/view/com/util/ErrorBoundary'
 import {usePostFeedQuery as useFollowingV2PostFeedQuery} from '#/features/followingV2/home/queries/postFeed'
+import {Header} from '#/screens/VideoFeed/components/Header'
+import * as Layout from '#/components/Layout'
 
 type VideoPost = {
   key: string
@@ -32,6 +35,7 @@ export function VideoFeed() {
   const navigation = useNavigation<NavigationProp>()
   const isFocused = useIsFocused()
   const {height} = useWindowDimensions()
+  const {top} = useSafeAreaInsets()
   const {params} = route
 
   const feedDesc = useMemo(() => {
@@ -104,9 +108,17 @@ export function VideoFeed() {
   }
 
   return (
-    <ActiveVideoWebProvider>
-      <View style={{flex: 1, backgroundColor: '#08080b'}}>
-        <FlatList
+    <Layout.Screen
+      minimalShell
+      fullBleed
+      noInsetTop
+      style={{backgroundColor: 'black'}}>
+      <ActiveVideoWebProvider>
+        <View style={{flex: 1, backgroundColor: '#08080b'}}>
+          <View style={{position: 'absolute', top: 0, left: 0, right: 0, zIndex: 50, paddingTop: top}}>
+            <Header sourceContext={params} />
+          </View>
+          <FlatList
           data={videos}
           keyExtractor={item => item.key}
           renderItem={renderItem}
@@ -125,9 +137,10 @@ export function VideoFeed() {
               </View>
             ) : null
           }
-        />
-      </View>
-    </ActiveVideoWebProvider>
+          />
+        </View>
+      </ActiveVideoWebProvider>
+    </Layout.Screen>
   )
 }
 
@@ -159,6 +172,7 @@ function VideoCard({
   const post = usePostShadow(item.post)
   const profile = useProfileShadow(item.post.author)
   const {currentAccount} = useSession()
+  const requireAuth = useRequireAuth()
 
   const postForActions = post === POST_TOMBSTONE ? castAsShadow(item.post) : post
   const [queueLike, queueUnlike] = usePostLikeMutationQueue(
@@ -235,7 +249,7 @@ function VideoCard({
         <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 10}}>
           <Pressable
             disabled={post === POST_TOMBSTONE}
-            onPress={() => isLiked ? void queueUnlike() : void queueLike()}
+            onPress={() => requireAuth(() => isLiked ? void queueUnlike() : void queueLike())}
             accessibilityRole="button"
             accessibilityLabel={isLiked ? 'Unlike video' : 'Like video'}
             style={{paddingVertical: 8, paddingHorizontal: 12, backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 18, opacity: post === POST_TOMBSTONE ? 0.5 : 1}}>
@@ -244,7 +258,7 @@ function VideoCard({
 
           {!isOwnProfile ? (
             <Pressable
-              onPress={() => isFollowing ? void queueUnfollow() : void queueFollow()}
+              onPress={() => requireAuth(() => isFollowing ? void queueUnfollow() : void queueFollow())}
               accessibilityRole="button"
               accessibilityLabel={isFollowing ? 'Unfollow creator' : 'Follow creator'}
               style={{paddingVertical: 8, paddingHorizontal: 12, backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 18}}>
