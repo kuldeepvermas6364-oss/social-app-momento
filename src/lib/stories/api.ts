@@ -1,8 +1,8 @@
 import {type BlobRef, type Client} from '@atproto/lex'
 import {
   type AtIdentifierString,
-  type DidString,
   AtUri,
+  type DidString,
   toDatetimeString,
 } from '@atproto/syntax'
 
