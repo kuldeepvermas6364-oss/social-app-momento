@@ -119,7 +119,6 @@ import {ProfileLabelerLikedByScreen} from '#/screens/Profile/ProfileLabelerLiked
 import {ProfileSearchScreen} from '#/screens/Profile/ProfileSearch'
 import {ProfileListScreen} from '#/screens/ProfileList'
 import {SavedFeeds} from '#/screens/SavedFeeds'
-import {StoriesScreen} from '#/screens/Stories'
 import {SearchScreen} from '#/screens/Search'
 import {AboutSettingsScreen} from '#/screens/Settings/AboutSettings'
 import {AccessibilitySettingsScreen} from '#/screens/Settings/AccessibilitySettings'
@@ -147,6 +146,7 @@ import {
   StarterPackScreenShort,
 } from '#/screens/StarterPack/StarterPackScreen'
 import {Wizard} from '#/screens/StarterPack/Wizard'
+import {StoriesScreen} from '#/screens/Stories'
 import TopicScreen from '#/screens/Topic'
 import {VideoFeed} from '#/screens/VideoFeed'
 import {type Theme, useBreakpoints, useTheme} from '#/alf'
