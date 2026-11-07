@@ -84,6 +84,7 @@ export type StoryView = {
   cid: string
   authorDid: string
   record: app.momento.story.Main
+  mediaUrl: string
 }
 
 /** Extracts the author's public PDS endpoint from a resolved DID document. */
@@ -155,11 +156,21 @@ export async function listStoriesForAuthors(
         return response.records.flatMap(record => {
           if (!isStoryRecord(record.value)) return []
           if (!isStoryActive(record.value, now)) return []
+          const media = record.value.media as unknown as {
+            ref?: {toString: () => string}
+            cid?: string
+          }
+          const cid = media.ref?.toString() ?? media.cid
+          if (!cid) return []
+          const mediaUrl = new URL('/xrpc/com.atproto.sync.getBlob', pdsEndpoint)
+          mediaUrl.searchParams.set('did', authorDid)
+          mediaUrl.searchParams.set('cid', cid)
           return [{
             uri: record.uri,
             cid: record.cid,
             authorDid,
             record: record.value,
+            mediaUrl: mediaUrl.toString(),
           }]
         })
       } catch {
