@@ -101,12 +101,8 @@ jobs:
         if: always()
         run: |
           pnpm exec prettier --write src/view/icons/Logomark.tsx src/view/icons/Logotype.tsx src/screens/VideoFeed/index.web.tsx
-          echo "--- VideoFeed/index.web.tsx ---"
-          cat src/screens/VideoFeed/index.web.tsx
-          echo "--- Logomark.tsx ---"
+          echo "Momento icons and web Reels source formatted."
           cat src/view/icons/Logomark.tsx
-          echo "--- Logotype.tsx ---"
-          cat src/view/icons/Logotype.tsx
 
       - name: Enforce quality gate
         if: always()
