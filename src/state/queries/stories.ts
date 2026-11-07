@@ -6,18 +6,17 @@ import {
   useQueryClient,
 } from '@tanstack/react-query'
 
+import {useProfileFollowsQuery} from '#/state/queries/profile-follows'
 import {STALE} from '#/state/queries'
 import {
   useAppviewClient,
   usePdsClient,
   useSession,
 } from '#/state/session'
-import {useProfileFollowsQuery} from '#/state/queries/profile-follows'
 import {
   createStory,
   deleteStory,
   listStoriesForAuthors,
-  type CreateStoryOptions,
   type StoryAsset,
 } from '#/lib/stories/api'
 
