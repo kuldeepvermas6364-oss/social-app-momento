@@ -168,3 +168,17 @@ export async function deleteFirebaseAccount(idToken: string): Promise<void> {
     {idToken},
   )
 }
+
+
+/** Send a Firebase password-reset email. */
+export async function sendFirebasePasswordResetEmail(
+  email: string,
+): Promise<void> {
+  await postAuthRequest<Record<string, never>>(
+    `${IDENTITY_TOOLKIT_URL}:sendOobCode`,
+    {
+      requestType: 'PASSWORD_RESET',
+      email: email.trim().toLowerCase(),
+    },
+  )
+}
