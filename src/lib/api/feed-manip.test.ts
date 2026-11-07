@@ -11,7 +11,9 @@ const author = {
   handle: 'alice.test',
 } satisfies app.bsky.actor.defs.ProfileViewBasic
 
-function post(id: string): app.bsky.feed.defs.PostView {
+function post(
+  id: string,
+): app.bsky.feed.defs.PostView & {$type: 'app.bsky.feed.defs#postView'} {
   return {
     $type: 'app.bsky.feed.defs#postView',
     uri: `at://did:plc:alice/app.bsky.feed.post/${id}`,
