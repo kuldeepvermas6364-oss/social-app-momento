@@ -152,7 +152,6 @@ function InnerApp() {
                     <QueryProvider
                       currentDid={currentAccount?.did}
                       cacheScope={cacheScope}>
-
                       <BetaUserStorageSync />
                       <PolicyUpdateOverlayProvider>
                         <LiveEventsProvider>
