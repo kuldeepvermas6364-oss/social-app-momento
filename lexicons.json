@@ -124,6 +124,7 @@
     "app.bsky.video.getJobStatus",
     "app.bsky.video.getUploadLimits",
     "app.bsky.video.uploadVideo",
+    "app.momento.story",
     "chat.bsky.actor.declaration",
     "chat.bsky.actor.defs",
     "chat.bsky.actor.deleteAccount",
