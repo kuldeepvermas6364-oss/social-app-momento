@@ -1,4 +1,4 @@
-import {useMemo, useState} from 'react'
+import {useState} from 'react'
 import {
   ActivityIndicator,
   Alert,
@@ -9,14 +9,14 @@ import {
   TextInput,
   View,
 } from 'react-native'
-import {type BlobRef, type Client} from '@atproto/lex'
 import {Image} from 'expo-image'
-import {type I18n} from '@lingui/core'
-import {useLingui} from '@lingui/react'
 import {
   type ImagePickerAsset,
   launchImageLibraryAsync,
 } from 'expo-image-picker'
+import {type BlobRef, type Client} from '@atproto/lex'
+import {type I18n} from '@lingui/core'
+import {useLingui} from '@lingui/react'
 
 import {IMAGE_SIZE_CONFIG_POSTS} from '#/lib/constants'
 import {createVideoTelemetry} from '#/lib/media/video/telemetry'
@@ -53,10 +53,7 @@ export function StoriesScreen() {
   const [selectedStory, setSelectedStory] = useState<StoryView | undefined>()
 
   const stories = storiesQuery.data ?? EMPTY_STORIES
-  const authorDids = useMemo(
-    () => [...new Set(stories.map(story => story.authorDid))],
-    [stories],
-  )
+  const authorDids = [...new Set(stories.map(story => story.authorDid))]
   const profilesQuery = useProfilesQuery({
     handles: authorDids,
     maintainData: true,
