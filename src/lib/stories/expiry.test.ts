@@ -1,8 +1,4 @@
-import {
-  getStoryExpiresAt,
-  isStoryActive,
-  STORY_DURATION_MS,
-} from './expiry'
+import {getStoryExpiresAt, isStoryActive, STORY_DURATION_MS} from './expiry'
 
 describe('Momento story expiry', () => {
   const createdAt = '2026-11-07T10:00:00.000Z'
