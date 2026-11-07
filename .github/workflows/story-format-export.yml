@@ -1,0 +1,30 @@
+name: Temporary Story Prettier Export
+
+on:
+  push:
+    paths:
+      - '.github/workflows/story-format-export.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.28.5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.22.1
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec prettier --write src/lib/stories/api.ts src/screens/Stories/index.tsx
+      - uses: actions/upload-artifact@v4
+        with:
+          name: story-prettier-output
+          path: |
+            src/lib/stories/api.ts
+            src/screens/Stories/index.tsx
