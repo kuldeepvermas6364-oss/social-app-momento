@@ -10,10 +10,7 @@ import {
   View,
 } from 'react-native'
 import {Image} from 'expo-image'
-import {
-  type ImagePickerAsset,
-  launchImageLibraryAsync,
-} from 'expo-image-picker'
+import {type ImagePickerAsset, launchImageLibraryAsync} from 'expo-image-picker'
 import {type BlobRef, type Client} from '@atproto/lex'
 import {type I18n} from '@lingui/core'
 import {useLingui} from '@lingui/react'

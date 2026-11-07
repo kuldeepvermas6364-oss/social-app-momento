@@ -141,14 +141,11 @@ export async function listStoriesForAuthors(
   const results: StoryView[][] = await Promise.all(
     uniqueDids.map(async (authorDid): Promise<StoryView[]> => {
       try {
-        const response = await appviewClient.call(
-          app.bsky.feed.getAuthorFeed,
-          {
-            actor: authorDid as AtIdentifierString,
-            filter: 'posts_no_replies',
-            limit: 100,
-          },
-        )
+        const response = await appviewClient.call(app.bsky.feed.getAuthorFeed, {
+          actor: authorDid as AtIdentifierString,
+          filter: 'posts_no_replies',
+          limit: 100,
+        })
 
         const authorStories: StoryView[] = response.feed.flatMap(
           (item): StoryView[] => {
@@ -212,7 +209,6 @@ export async function listStoriesForAuthors(
   return results
     .flat()
     .sort(
-      (a, b) =>
-        Date.parse(a.record.createdAt) - Date.parse(b.record.createdAt),
+      (a, b) => Date.parse(a.record.createdAt) - Date.parse(b.record.createdAt),
     )
 }
