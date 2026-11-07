@@ -337,7 +337,7 @@ function StoryVideo({story}: {story: StoryView}) {
 
   return (
     <VideoView
-      player={player}
+      player={player as Parameters<typeof VideoView>[0]['player']}
       nativeControls
       contentFit="contain"
       style={{flex: 1}}
