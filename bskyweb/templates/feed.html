@@ -2,15 +2,15 @@
 
 {% block head_title %}
 {%- if feedView -%}
-  {{ feedView.DisplayName }} by @{{ feedView.Creator.Handle }} | Bluesky Feed
+  {{ feedView.DisplayName }} by @{{ feedView.Creator.Handle }} | Momento Feed
 {%- else -%}
-  Bluesky
+  Momento
 {%- endif -%}
 {% endblock %}
 
 {% block html_head_extra -%}
 {%- if feedView -%}
-  <meta property="og:site_name" content="Bluesky Social">
+  <meta property="og:site_name" content="Momento">
   <meta property="og:type" content="website">
   {%- if requestURI %}
   <meta property="og:url" content="{{ requestURI }}">
@@ -45,11 +45,11 @@
 
 {% block noscript_extra -%}
 {%- if feedView -%}
-<div id="bsky_feed_summary">
+<div id="momento_feed_summary">
   <h3>Feed</h3>
-  <p id="bsky_feed_name">{{ feedView.DisplayName }}</p>
-  <p id="bsky_feed_creator">{{ feedView.Creator.Handle }}</p>
-  <p id="bsky_feed_description">{{ feedView.Description }}</p>
+  <p id="momento_feed_name">{{ feedView.DisplayName }}</p>
+  <p id="momento_feed_creator">{{ feedView.Creator.Handle }}</p>
+  <p id="momento_feed_description">{{ feedView.Description }}</p>
 </div>
 {% endif -%}
 {%- endblock %}
