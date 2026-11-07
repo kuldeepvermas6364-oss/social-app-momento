@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useState} from 'react'
+import {useMemo, useState} from 'react'
 import {
   ActivityIndicator,
   Alert,
@@ -10,19 +10,14 @@ import {
   View,
 } from 'react-native'
 import {type BlobRef, type Client} from '@atproto/lex'
-import {type AtIdentifierString} from '@atproto/syntax'
+import {Image} from 'expo-image'
 import {type I18n} from '@lingui/core'
 import {useLingui} from '@lingui/react'
-import {Image} from 'expo-image'
 import {
   type ImagePickerAsset,
   launchImageLibraryAsync,
 } from 'expo-image-picker'
-import {createVideoPlayer, VideoView} from 'expo-video'
 
-import {type Metrics} from '#/analytics/metrics'
-import {useAnalytics} from '#/analytics'
-import * as Layout from '#/components/Layout'
 import {IMAGE_SIZE_CONFIG_POSTS} from '#/lib/constants'
 import {createVideoTelemetry} from '#/lib/media/video/telemetry'
 import {getStoryMediaType, type StoryAsset, type StoryView} from '#/lib/stories/api'
@@ -35,8 +30,13 @@ import {
 } from '#/state/queries/stories'
 import {usePdsClient, useSession} from '#/state/session'
 import {processVideo} from '#/view/com/composer/state/video'
+import * as Layout from '#/components/Layout'
+import {useAnalytics} from '#/analytics'
+import {type Metrics} from '#/analytics/metrics'
+import {StoryVideo} from './StoryVideo'
 
 const MAX_VIDEO_BYTES = 100_000_000
+const EMPTY_STORIES: StoryView[] = []
 
 type MetricFn = <E extends keyof Metrics>(event: E, payload: Metrics[E]) => void
 
@@ -52,19 +52,17 @@ export function StoriesScreen() {
   const [isPreparing, setIsPreparing] = useState(false)
   const [selectedStory, setSelectedStory] = useState<StoryView | undefined>()
 
-  const stories = storiesQuery.data ?? []
+  const stories = storiesQuery.data ?? EMPTY_STORIES
   const authorDids = useMemo(
     () => [...new Set(stories.map(story => story.authorDid))],
     [stories],
   )
   const profilesQuery = useProfilesQuery({
-    handles: authorDids as AtIdentifierString[],
+    handles: authorDids,
     maintainData: true,
   })
-  const profiles = profilesQuery.data?.profiles ?? []
-  const profileByDid = useMemo(
-    () => new Map(profiles.map(profile => [profile.did, profile])),
-    [profiles],
+  const profileByDid = new Map(
+    (profilesQuery.data?.profiles ?? []).map(profile => [profile.did, profile]),
   )
 
   const onAddStory = async () => {
@@ -156,6 +154,7 @@ export function StoriesScreen() {
         </View>
 
         <TextInput
+          accessibilityLabel="Story caption"
           value={caption}
           onChangeText={value => setCaption(value.slice(0, 300))}
           placeholder="Add a short caption (optional)"
@@ -324,24 +323,6 @@ export function StoriesScreen() {
         ) : null}
       </Modal>
     </Layout.Screen>
-  )
-}
-
-function StoryVideo({story}: {story: StoryView}) {
-  const player = useMemo(() => createVideoPlayer(story.mediaUrl), [story.mediaUrl])
-  useEffect(() => {
-    player.loop = true
-    player.play()
-    return () => player.release()
-  }, [player])
-
-  return (
-    <VideoView
-      player={player as Parameters<typeof VideoView>[0]['player']}
-      nativeControls
-      contentFit="contain"
-      style={{flex: 1}}
-    />
   )
 }
 
