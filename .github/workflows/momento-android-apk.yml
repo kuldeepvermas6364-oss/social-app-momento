@@ -59,6 +59,8 @@ jobs:
 
       - name: Build installable debug APK
         working-directory: android
+        env:
+          EXPO_PUBLIC_FIREBASE_API_KEY: ${{ secrets.EXPO_PUBLIC_FIREBASE_API_KEY }}
         run: ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Package APK
