@@ -17,7 +17,7 @@ import {Loader} from '#/components/Loader'
 type Mode = 'signIn' | 'signUp'
 
 function isAtLeast13(value: string): boolean {
-  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(value)) return false
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
   const [year, month, day] = value.split('-').map(Number)
   const date = new Date(year, month - 1, day)
   if (
