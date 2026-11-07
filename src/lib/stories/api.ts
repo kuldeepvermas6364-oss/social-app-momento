@@ -59,7 +59,6 @@ export async function createStory({
     repo: pdsClient.assertDid,
     collection: 'app.momento.story',
     record,
-    validate: true,
   })
 }
 
