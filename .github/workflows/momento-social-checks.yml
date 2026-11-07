@@ -100,7 +100,9 @@ jobs:
       - name: Format Momento SVG files for review
         if: always()
         run: |
-          pnpm exec prettier --write src/view/icons/Logomark.tsx src/view/icons/Logotype.tsx
+          pnpm exec prettier --write src/view/icons/Logomark.tsx src/view/icons/Logotype.tsx src/screens/VideoFeed/index.web.tsx
+          echo "--- VideoFeed/index.web.tsx ---"
+          cat src/screens/VideoFeed/index.web.tsx
           echo "--- Logomark.tsx ---"
           cat src/view/icons/Logomark.tsx
           echo "--- Logotype.tsx ---"
