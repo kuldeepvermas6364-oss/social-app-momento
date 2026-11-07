@@ -1,8 +1,8 @@
 import Svg, {
   Path,
-  Text as SvgText,
   type PathProps,
   type SvgProps,
+  Text as SvgText,
 } from 'react-native-svg'
 
 import {useTheme} from '#/alf'
