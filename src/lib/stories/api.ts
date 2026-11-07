@@ -1,4 +1,4 @@
-import {type Client} from '@atproto/lex'
+import {type BlobRef, type Client} from '@atproto/lex'
 import {
   type AtIdentifierString,
   AtUri,
@@ -16,6 +16,7 @@ export type StoryMediaType = 'image' | 'video'
 export type StoryAsset = {
   path: string
   mime: string
+  blob?: BlobRef
 }
 
 export type CreateStoryOptions = {
@@ -33,6 +34,7 @@ export type StoryView = {
   record: app.bsky.feed.post.Main
   mediaType: StoryMediaType
   mediaUrl: string
+  thumbnailUrl?: string
 }
 
 /** Maps only media formats supported by the standard AT Protocol embeds. */
@@ -59,7 +61,13 @@ export async function createStory({
     throw new TypeError('Story media path is required')
   }
 
-  const {blob} = await uploadBlob(pdsClient, asset.path, asset.mime)
+  const mediaBlob =
+    mediaType === 'video'
+      ? asset.blob
+      : (await uploadBlob(pdsClient, asset.path, asset.mime)).blob
+  if (!mediaBlob) {
+    throw new Error('Video processing must finish before the story is published.')
+  }
   const embed: app.bsky.feed.post.Main['embed'] =
     mediaType === 'image'
       ? {
@@ -67,13 +75,13 @@ export async function createStory({
           images: [
             {
               alt: altText?.trim().slice(0, 1000) || caption?.trim() || '',
-              image: blob,
+              image: mediaBlob,
             },
           ],
         }
       : {
           $type: 'app.bsky.embed.video',
-          video: blob,
+          video: mediaBlob,
           alt: altText?.trim().slice(0, 1000) || caption?.trim() || undefined,
         }
 
@@ -185,6 +193,7 @@ export async function listStoriesForAuthors(
                 record,
                 mediaType: 'video' as const,
                 mediaUrl: embed.playlist,
+                thumbnailUrl: embed.thumbnail,
               },
             ]
           }
