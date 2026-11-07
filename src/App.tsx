@@ -43,11 +43,8 @@ import {Provider as UnreadNotifsProvider} from '#/state/queries/notifications/un
 import {Provider as ServiceAccountManager} from '#/state/service-config'
 import {
   Provider as SessionProvider,
-  type SessionAccount,
   useSession,
-  useSessionApi,
 } from '#/state/session'
-import {readLastActiveAccount} from '#/state/session/util'
 import {Provider as ShellStateProvider} from '#/state/shell'
 import {Provider as ComposerProvider} from '#/state/shell/composer'
 import {Provider as LandingProvider} from '#/state/shell/landing'
@@ -112,28 +109,24 @@ void prefetchAppConfig()
 function InnerApp() {
   const [isReady, setIsReady] = useState(false)
   const {currentAccount} = useSession()
-  const {resumeSession} = useSessionApi()
   const theme = useColorModeTheme()
   const {t: l} = useLingui()
   const hasCheckedLanding = useLandingEntry()
 
-  // init
+  // Firebase is the active identity provider. Do not restore legacy
+  // AT Protocol sessions during the Firebase migration.
   useEffect(() => {
-    async function onLaunch(account?: SessionAccount) {
+    async function onLaunch() {
       try {
-        if (account) {
-          await resumeSession(account)
-        } else {
-          await features.init
-        }
+        await features.init
       } catch (e) {
-        logger.warn(`session: resume failed`, {message: e})
+        logger.warn('App initialization failed', {message: e})
+      } finally {
+        setIsReady(true)
       }
-      setIsReady(true)
     }
-    const account = readLastActiveAccount()
-    void onLaunch(account)
-  }, [resumeSession])
+    void onLaunch()
+  }, [])
 
   useEffect(() => {
     return listenSessionDropped(() => {
