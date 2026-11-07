@@ -22,8 +22,6 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Format Stories sources and commit the result
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           pnpm exec prettier --write src/lib/stories/api.ts src/screens/Stories/index.tsx
@@ -35,4 +33,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/lib/stories/api.ts src/screens/Stories/index.tsx
           git commit -m "style(stories): apply Prettier formatting"
+          git fetch origin main
+          git rebase origin/main
           git push origin HEAD:main
