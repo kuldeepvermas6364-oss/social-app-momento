@@ -1,19 +1,26 @@
 import {createElement, useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {FlatList, Pressable, View, useWindowDimensions} from 'react-native'
 import {useSafeAreaInsets} from 'react-native-safe-area-context'
+import {RichText as RichTextAPI} from '@bsky/sdk/richtext'
 import {useIsFocused, useNavigation, useRoute, type RouteProp} from '@react-navigation/native'
 
 import {type CommonNavigatorParams, type NavigationProp} from '#/lib/routes/types'
 import {POST_TOMBSTONE, usePostShadow} from '#/state/cache/post-shadow'
-import {castAsShadow} from '#/state/cache/types'
 import {useProfileShadow} from '#/state/cache/profile-shadow'
-import {usePostLikeMutationQueue} from '#/state/queries/post'
+import {
+  FeedFeedbackProvider,
+  useFeedFeedback,
+  useFeedFeedbackContext,
+} from '#/state/feed-feedback'
+import {useFeedInfo} from '#/state/queries/feed'
 import {usePostFeedQuery} from '#/state/queries/post-feed'
 import {useProfileFollowMutationQueue} from '#/state/queries/profile'
 import {useRequireAuth, useSession} from '#/state/session'
 import {app} from '#/lexicons'
 import * as bsky from '#/types/bsky'
+import {useAnalytics} from '#/analytics'
 import {Text} from '#/components/Typography'
+import {PostControls} from '#/components/PostControls'
 import {Provider as ActiveVideoWebProvider, useActiveVideoWeb} from '#/components/Post/Embed/VideoEmbed/ActiveVideoWebContext'
 import {VideoEmbedInnerWeb} from '#/components/Post/Embed/VideoEmbed/VideoEmbedInner/VideoEmbedInnerWeb'
 import * as ReportDialogMetadataContext from '#/components/moderation/ReportDialog/ReportDialogMetadataContext'
@@ -21,6 +28,7 @@ import {ErrorBoundary} from '#/view/com/util/ErrorBoundary'
 import {usePostFeedQuery as useFollowingV2PostFeedQuery} from '#/features/followingV2/home/queries/postFeed'
 import {Header} from '#/screens/VideoFeed/components/Header'
 import * as Layout from '#/components/Layout'
+import {ThemeProvider} from '#/alf'
 
 type VideoPost = {
   key: string
@@ -36,6 +44,7 @@ export function VideoFeed() {
   const isFocused = useIsFocused()
   const {height} = useWindowDimensions()
   const {top} = useSafeAreaInsets()
+  const {hasSession} = useSession()
   const {params} = route
 
   const feedDesc = useMemo(() => {
@@ -43,6 +52,9 @@ export function VideoFeed() {
     return `author|${params.did}|${params.filter}` as const
   }, [params])
 
+  const feedUri = params.type === 'feedgen' ? params.uri : undefined
+  const {data: feedInfo} = useFeedInfo(feedUri)
+  const feedFeedback = useFeedFeedback(feedInfo ?? undefined, hasSession)
   const feedParams =
     params.type === 'feedgen' && params.sourceInterstitial !== 'none'
       ? {feedCacheKey: params.sourceInterstitial}
@@ -113,33 +125,40 @@ export function VideoFeed() {
       fullBleed
       noInsetTop
       style={{backgroundColor: 'black'}}>
-      <ActiveVideoWebProvider>
-        <View style={{flex: 1, backgroundColor: '#08080b'}}>
-          <View style={{position: 'absolute', top: 0, left: 0, right: 0, zIndex: 50, paddingTop: top}}>
-            <Header sourceContext={params} />
-          </View>
-          <FlatList
-          data={videos}
-          keyExtractor={item => item.key}
-          renderItem={renderItem}
-          pagingEnabled
-          snapToAlignment="start"
-          decelerationRate="fast"
-          showsVerticalScrollIndicator={false}
-          onEndReached={() => {
-            if (hasNextPage && !isFetchingNextPage) void fetchNextPage()
-          }}
-          onEndReachedThreshold={1}
-          ListFooterComponent={
-            isFetchingNextPage ? (
-              <View style={{height: 64, alignItems: 'center', justifyContent: 'center'}}>
-                <Text style={{color: 'white'}}>Loading more…</Text>
+      <ThemeProvider theme="dark">
+        <FeedFeedbackProvider value={feedFeedback}>
+          <ActiveVideoWebProvider>
+            <View style={{flex: 1, backgroundColor: '#08080b'}}>
+              <View style={{position: 'absolute', top: 0, left: 0, right: 0, zIndex: 50, paddingTop: top}}>
+                <Header sourceContext={params} />
               </View>
-            ) : null
-          }
-          />
-        </View>
-      </ActiveVideoWebProvider>
+              <FlatList
+                data={videos}
+                keyExtractor={item => item.key}
+                renderItem={renderItem}
+                pagingEnabled
+                snapToAlignment="start"
+                decelerationRate="fast"
+                showsVerticalScrollIndicator={false}
+                initialNumToRender={2}
+                maxToRenderPerBatch={2}
+                windowSize={4}
+                onEndReached={() => {
+                  if (hasNextPage && !isFetchingNextPage) void fetchNextPage()
+                }}
+                onEndReachedThreshold={1}
+                ListFooterComponent={
+                  isFetchingNextPage ? (
+                    <View style={{height: 64, alignItems: 'center', justifyContent: 'center'}}>
+                      <Text style={{color: 'white'}}>Loading more…</Text>
+                    </View>
+                  ) : null
+                }
+              />
+            </View>
+          </ActiveVideoWebProvider>
+        </FeedFeedbackProvider>
+      </ThemeProvider>
     </Layout.Screen>
   )
 }
@@ -165,26 +184,31 @@ function VideoCard({
   onOpenAuthor: () => void
   onOpenPost: () => void
 }) {
+  const ax = useAnalytics()
   const cardRef = useRef<HTMLDivElement | null>(null)
   const lastKnownTime = useRef<number | undefined>(undefined)
+  const hasTrackedView = useRef(false)
+  const hasTrackedVideoImpression = useRef(false)
   const [onScreen, setOnScreen] = useState(false)
   const {active: selectedByViewport, setActive, sendPosition} = useActiveVideoWeb()
+  const {sendInteraction, feedDescriptor} = useFeedFeedbackContext()
   const post = usePostShadow(item.post)
   const profile = useProfileShadow(item.post.author)
   const {currentAccount} = useSession()
   const requireAuth = useRequireAuth()
-
-  const postForActions = post === POST_TOMBSTONE ? castAsShadow(item.post) : post
-  const [queueLike, queueUnlike] = usePostLikeMutationQueue(
-    postForActions,
-    undefined,
-    undefined,
-    'ImmersiveVideo',
+  const record = bsky.isType(app.bsky.feed.post, item.post.record)
+    ? item.post.record
+    : undefined
+  const richText = useMemo(
+    () => new RichTextAPI({text: record?.text || '', facets: record?.facets}),
+    [record],
   )
   const [queueFollow, queueUnfollow] = useProfileFollowMutationQueue(
     profile,
     'ImmersiveVideo',
   )
+
+  const active = routeFocused && selectedByViewport
 
   useEffect(() => {
     const node = cardRef.current
@@ -202,11 +226,48 @@ function VideoCard({
     return () => observer.disconnect()
   }, [sendPosition])
 
-  const isLiked = post !== POST_TOMBSTONE && Boolean(post.viewer?.like)
-  const likeCount = post !== POST_TOMBSTONE ? post.likeCount ?? 0 : 0
+  useEffect(() => {
+    if (!active) return
+    if (!hasTrackedVideoImpression.current) {
+      hasTrackedVideoImpression.current = true
+      ax.metric('video:impression', {
+        postUri: item.post.uri,
+        postAuthorDid: item.post.author.did,
+        context: 'immersiveFeed',
+        presentation: item.embed.presentation === 'gif' ? 'gif' : 'video',
+      })
+    }
+    sendInteraction({
+      item: item.post.uri,
+      event: 'app.bsky.feed.defs#interactionSeen',
+      feedContext: item.feedContext,
+      reqId: item.reqId,
+    })
+    if (!hasTrackedView.current) {
+      hasTrackedView.current = true
+      ax.metric('post:view', {
+        uri: item.post.uri,
+        authorDid: item.post.author.did,
+        isReply: Boolean(record?.reply),
+        logContext: 'ImmersiveVideo',
+        feedDescriptor,
+      })
+    }
+  }, [
+    active,
+    ax,
+    feedDescriptor,
+    item.embed.presentation,
+    item.feedContext,
+    item.post.author.did,
+    item.post.uri,
+    item.reqId,
+    record?.reply,
+    sendInteraction,
+  ])
+
   const isFollowing = Boolean(profile.viewer?.following)
   const isOwnProfile = currentAccount?.did === item.post.author.did
-  const active = routeFocused && selectedByViewport
 
   return (
     <View style={{height, width: '100%', backgroundColor: '#08080b', overflow: 'hidden'}}>
@@ -224,7 +285,15 @@ function VideoCard({
             setActive={setActive}
             onScreen={onScreen && routeFocused}
             lastKnownTime={lastKnownTime}
-            onPlaybackStart={() => {}}
+            onPlaybackStart={autoplay => {
+              ax.metric('video:playback:start', {
+                postUri: item.post.uri,
+                postAuthorDid: item.post.author.did,
+                context: 'immersiveFeed',
+                presentation: item.embed.presentation === 'gif' ? 'gif' : 'video',
+                autoplay,
+              })
+            }}
             onPlaybackProgress={time => {
               lastKnownTime.current = time
             }}
@@ -242,34 +311,32 @@ function VideoCard({
           <Text style={{color: 'white', opacity: 0.85}}>@{item.post.author.handle}</Text>
         </Pressable>
 
-        {item.post.record && typeof item.post.record === 'object' && 'text' in item.post.record && typeof item.post.record.text === 'string' ? (
-          <Text style={{color: 'white'}}>{item.post.record.text}</Text>
+        {record?.text?.trim() ? <Text style={{color: 'white'}}>{record.text}</Text> : null}
+
+        {!isOwnProfile ? (
+          <Pressable
+            onPress={() => requireAuth(() => isFollowing ? void queueUnfollow() : void queueFollow())}
+            accessibilityRole="button"
+            accessibilityLabel={isFollowing ? 'Unfollow creator' : 'Follow creator'}
+            style={{alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 12, backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 18}}>
+            <Text style={{color: 'white'}}>{isFollowing ? 'Following' : 'Follow'}</Text>
+          </Pressable>
         ) : null}
 
-        <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 10}}>
-          <Pressable
-            disabled={post === POST_TOMBSTONE}
-            onPress={() => requireAuth(() => isLiked ? void queueUnlike() : void queueLike())}
-            accessibilityRole="button"
-            accessibilityLabel={isLiked ? 'Unlike video' : 'Like video'}
-            style={{paddingVertical: 8, paddingHorizontal: 12, backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 18, opacity: post === POST_TOMBSTONE ? 0.5 : 1}}>
-            <Text style={{color: 'white'}}>{isLiked ? '♥' : '♡'} {likeCount}</Text>
-          </Pressable>
-
-          {!isOwnProfile ? (
-            <Pressable
-              onPress={() => requireAuth(() => isFollowing ? void queueUnfollow() : void queueFollow())}
-              accessibilityRole="button"
-              accessibilityLabel={isFollowing ? 'Unfollow creator' : 'Follow creator'}
-              style={{paddingVertical: 8, paddingHorizontal: 12, backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 18}}>
-              <Text style={{color: 'white'}}>{isFollowing ? 'Following' : 'Follow'}</Text>
-            </Pressable>
-          ) : null}
-
-          <Pressable onPress={onOpenPost} accessibilityRole="button" style={{paddingVertical: 8, paddingHorizontal: 12, backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 18}}>
-            <Text style={{color: 'white'}}>View post</Text>
-          </Pressable>
-        </View>
+        {post !== POST_TOMBSTONE && record ? (
+          <PostControls
+            richText={richText}
+            post={post}
+            record={record}
+            feedContext={item.feedContext}
+            reqId={item.reqId}
+            logContext="ImmersiveVideo"
+            onPressReply={onOpenPost}
+            big
+          />
+        ) : post === POST_TOMBSTONE ? (
+          <Text style={{color: 'white'}}>This post has been deleted.</Text>
+        ) : null}
       </View>
     </View>
   )
