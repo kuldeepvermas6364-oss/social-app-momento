@@ -119,6 +119,7 @@ import {ProfileLabelerLikedByScreen} from '#/screens/Profile/ProfileLabelerLiked
 import {ProfileSearchScreen} from '#/screens/Profile/ProfileSearch'
 import {ProfileListScreen} from '#/screens/ProfileList'
 import {SavedFeeds} from '#/screens/SavedFeeds'
+import {StoriesScreen} from '#/screens/Stories'
 import {SearchScreen} from '#/screens/Search'
 import {AboutSettingsScreen} from '#/screens/Settings/AboutSettings'
 import {AccessibilitySettingsScreen} from '#/screens/Settings/AccessibilitySettings'
@@ -616,6 +617,11 @@ function commonScreens(Stack: typeof Flat, unreadCountLabel?: string) {
           title: title(msg`Video Feed`),
           requireAuth: true,
         }}
+      />
+      <Stack.Screen
+        name="Stories"
+        getComponent={() => StoriesScreen}
+        options={{title: title(msg`Stories`), requireAuth: true}}
       />
       <Stack.Screen
         name="Bookmarks"
