@@ -1,5 +1,5 @@
 {
-  "name": "bsky.app",
+  "name": "momento",
   "version": "1.138.0",
   "private": true,
   "sideEffects": [
