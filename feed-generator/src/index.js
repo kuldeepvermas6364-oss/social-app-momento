@@ -111,7 +111,7 @@ function didDocument(hostname) {
 }
 
 export default {
-  async fetch(request) {
+  async fetch(request, env) {
     const url = new URL(request.url);
     if (request.method === "OPTIONS") {
       return new Response(null, {
@@ -135,9 +135,12 @@ export default {
     }
 
     if (url.pathname === "/xrpc/app.bsky.feed.describeFeedGenerator") {
+      if (!env.FEED_URI) {
+        return json({ error: "Feed record URI is not configured yet" }, 503);
+      }
       return json({
         did: "did:web:" + url.hostname,
-        feeds: [{ uri: "at://" + "did:web:" + url.hostname + "/" + FEED_URI }],
+        feeds: [{ uri: env.FEED_URI }],
       });
     }
 
@@ -146,7 +149,7 @@ export default {
     }
 
     const feed = url.searchParams.get("feed");
-    if (feed && !feed.endsWith("/" + FEED_URI)) {
+    if (feed && (env.FEED_URI ? feed !== env.FEED_URI : !feed.endsWith("/" + FEED_URI))) {
       return json({ error: "Unknown feed" }, 400);
     }
 
