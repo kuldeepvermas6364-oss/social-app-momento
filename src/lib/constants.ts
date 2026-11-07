@@ -166,7 +166,7 @@ export const TRENDING_DID = 'did:plc:qrz3lhbyuxbeilrc6nekdqme'
 export const TRENDING_HANDLE = 'trending.bsky.app'
 
 export const DISCOVER_FEED_URI =
-  'at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot'
+  'at://did:plc:i3vxbku5ruonxwcevi3urzt3/app.bsky.feed.generator/for-you'
 export const VIDEO_FEED_URI =
   'at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/thevids'
 export const STAGING_VIDEO_FEED_URI =
