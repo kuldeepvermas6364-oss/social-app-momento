@@ -50,6 +50,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Verify Firebase API key is configured
+        env:
+          EXPO_PUBLIC_FIREBASE_API_KEY: ${{ secrets.EXPO_PUBLIC_FIREBASE_API_KEY }}
+        run: test -n "$EXPO_PUBLIC_FIREBASE_API_KEY"
+
       - name: Generate Android native project
         env:
           CI: "1"
