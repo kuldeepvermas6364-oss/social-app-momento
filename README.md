@@ -36,9 +36,7 @@ namespaces for interoperability with the existing network.
 - Expo slug: `momento`
 - Deep-link scheme: `momento://`
 
-The Android GitHub Actions workflow produces a debug-signed APK for device
-testing. A production Google Play release requires a separately configured
-release signing key and store submission credentials.
+The [Momento Android debug APK workflow](.github/workflows/momento-android-apk.yml) produces a debug-signed APK for device testing. A production Google Play release requires a separately configured release signing key and store submission credentials.
 
 ## License and upstream attribution
 
