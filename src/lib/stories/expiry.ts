@@ -1,7 +1,7 @@
 /**
- * Momento stories are short-lived records. Expiry is stored in the AT Protocol
- * record so every client can independently hide a story without a private
- * server-side clock.
+ * Momento stories use standard AT Protocol post records. Their expiry is
+ * derived from the standard createdAt timestamp, so no custom server clock is
+ * required.
  */
 export const STORY_DURATION_MS = 24 * 60 * 60 * 1000
 
