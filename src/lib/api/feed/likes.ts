@@ -22,7 +22,7 @@ export class LikesFeedAPI implements FeedAPI {
     this.params = feedParams
   }
 
-  async peekLatest(): Promise<app.bsky.feed.defs.FeedViewPost> {
+  async peekLatest(): Promise<app.bsky.feed.defs.FeedViewPost | undefined> {
     const data = await this.client.call(app.bsky.feed.getActorLikes, {
       ...this.params,
       limit: 1,
