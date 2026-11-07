@@ -102,9 +102,9 @@ jobs:
           {
             echo "## Momento Android APK"
             echo
-            echo "- Package: `com.kuldeep.momento`"
+            echo "- Package: com.kuldeep.momento"
             echo "- Type: debug-signed test APK"
-            echo "- File: `${{ steps.package.outputs.name }}`"
+            echo "- File: ${{ steps.package.outputs.name }}"
             echo
             echo "This build is for direct device testing, not Google Play production publishing."
           } >> "$GITHUB_STEP_SUMMARY"
