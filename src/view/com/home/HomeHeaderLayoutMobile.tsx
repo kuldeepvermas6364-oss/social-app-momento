@@ -23,6 +23,7 @@ import {
   type ViewStyleProp,
 } from '#/alf'
 import {ButtonIcon} from '#/components/Button'
+import {Camera_Stroke2_Corner0_Rounded as CameraIcon} from '#/components/icons/Camera'
 import {Hashtag_Stroke2_Corner0_Rounded as FeedsIcon} from '#/components/icons/Hashtag'
 import * as Layout from '#/components/Layout'
 import {Link} from '#/components/Link'
@@ -97,25 +98,42 @@ export function HomeHeaderLayoutMobile({
 
           <Layout.Header.Slot>
             {hasSession && (
-              <Link
-                testID="viewHeaderHomeFeedPrefsBtn"
-                to={{screen: 'Feeds'}}
-                hitSlop={HITSLOP_10}
-                label={_(msg`View your feeds and explore more`)}
-                size="small"
-                variant="ghost"
-                color="secondary"
-                shape="square"
-                onPress={() => {
-                  ax.metric('nav:click', {item: 'feeds', surface: 'topBar'})
-                }}
-                style={[
-                  a.justify_center,
-                  {marginRight: -Layout.BUTTON_VISUAL_ALIGNMENT_OFFSET},
-                  a.bg_transparent,
-                ]}>
-                <ButtonIcon icon={FeedsIcon} size="lg" />
-              </Link>
+              <>
+                <Link
+                  testID="viewHeaderStoriesBtn"
+                  to={{screen: 'Stories'}}
+                  hitSlop={HITSLOP_10}
+                  label={_(msg`View stories`)}
+                  size="small"
+                  variant="ghost"
+                  color="secondary"
+                  shape="square"
+                  onPress={() => {
+                    ax.metric('nav:click', {item: 'stories', surface: 'topBar'})
+                  }}
+                  style={[a.justify_center, a.bg_transparent]}>
+                  <ButtonIcon icon={CameraIcon} size="lg" />
+                </Link>
+                <Link
+                  testID="viewHeaderHomeFeedPrefsBtn"
+                  to={{screen: 'Feeds'}}
+                  hitSlop={HITSLOP_10}
+                  label={_(msg`View your feeds and explore more`)}
+                  size="small"
+                  variant="ghost"
+                  color="secondary"
+                  shape="square"
+                  onPress={() => {
+                    ax.metric('nav:click', {item: 'feeds', surface: 'topBar'})
+                  }}
+                  style={[
+                    a.justify_center,
+                    {marginRight: -Layout.BUTTON_VISUAL_ALIGNMENT_OFFSET},
+                    a.bg_transparent,
+                  ]}>
+                  <ButtonIcon icon={FeedsIcon} size="lg" />
+                </Link>
+              </>
             )}
           </Layout.Header.Slot>
         </Layout.Header.Outer>
