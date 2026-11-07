@@ -14,6 +14,7 @@ import {BottomSheetProvider} from '@bsky.app/bottom-sheet'
 import {BackgroundNotificationPreferencesProvider} from '@bsky.app/expo-background-notification-handler/src/BackgroundNotificationHandlerProvider'
 import {useLingui} from '@lingui/react/macro'
 
+import {FirebaseAuthProvider, useFirebaseAuth} from '#/lib/firebase/session'
 import {Provider as HideBottomBarBorderProvider} from '#/lib/hooks/useHideBottomBarBorder'
 import {QueryProvider} from '#/lib/react-query'
 import {ThemeProvider} from '#/lib/ThemeContext'
@@ -41,10 +42,7 @@ import {Provider as LabelDefsProvider} from '#/state/preferences/label-defs'
 import {Provider as ModerationOptsProvider} from '#/state/preferences/moderation-opts'
 import {Provider as UnreadNotifsProvider} from '#/state/queries/notifications/unread'
 import {Provider as ServiceAccountManager} from '#/state/service-config'
-import {
-  Provider as SessionProvider,
-  useSession,
-} from '#/state/session'
+import {Provider as SessionProvider, useSession} from '#/state/session'
 import {Provider as ShellStateProvider} from '#/state/shell'
 import {Provider as ComposerProvider} from '#/state/shell/composer'
 import {Provider as LandingProvider} from '#/state/shell/landing'
@@ -85,10 +83,6 @@ import {
 import {TrendingTopicsWidgetSync} from '#/features/trendingWidget/Sync'
 import * as Geo from '#/geolocation'
 import {Splash} from '#/Splash'
-import {
-  FirebaseAuthProvider,
-  useFirebaseAuth,
-} from '#/lib/firebase/session'
 
 void identifyDevice(getDeviceId(), setupDeviceId)
 
