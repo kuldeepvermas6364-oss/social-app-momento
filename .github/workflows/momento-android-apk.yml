@@ -1,4 +1,4 @@
-name: Build Momento Android debug APK
+name: Build Momento Android signed release APK
 
 on:
   workflow_dispatch:
@@ -12,12 +12,12 @@ permissions:
   contents: write
 
 concurrency:
-  group: momento-android-${{ github.ref }}
+  group: momento-android-release-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
   build:
-    name: Build Momento debug APK
+    name: Build signed Momento release APK
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
@@ -50,10 +50,20 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Verify Firebase API key is configured
+      - name: Verify Firebase and Android release signing secrets
         env:
           EXPO_PUBLIC_FIREBASE_API_KEY: ${{ secrets.EXPO_PUBLIC_FIREBASE_API_KEY }}
-        run: test -n "$EXPO_PUBLIC_FIREBASE_API_KEY"
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$EXPO_PUBLIC_FIREBASE_API_KEY"
+          test -n "$ANDROID_KEYSTORE_BASE64"
+          test -n "$ANDROID_KEYSTORE_PASSWORD"
+          test -n "$ANDROID_KEY_ALIAS"
+          test -n "$ANDROID_KEY_PASSWORD"
 
       - name: Generate Android native project
         env:
@@ -62,59 +72,105 @@ jobs:
           EXPO_PUBLIC_FIREBASE_API_KEY: ${{ secrets.EXPO_PUBLIC_FIREBASE_API_KEY }}
         run: pnpm exec expo prebuild --platform android --clean --no-install
 
-      - name: Build installable debug APK
+      - name: Configure release signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/momento-release.jks
+          test -s android/app/momento-release.jks
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          gradle = Path("android/app/build.gradle")
+          source = gradle.read_text()
+          signing_block = """signingConfigs {
+              release {
+                  storeFile file("momento-release.jks")
+                  storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                  keyAlias System.getenv("ANDROID_KEY_ALIAS")
+                  keyPassword System.getenv("ANDROID_KEY_PASSWORD")
+              }
+          """
+          if "release {\n        storeFile file(\"momento-release.jks\")" not in source:
+              source, count = re.subn(r"signingConfigs\\s*\\{", signing_block, source, count=1)
+              if count != 1:
+                  raise SystemExit("Could not add the release signing configuration.")
+          source, count = re.subn(
+              r"(release\\s*\\{[\\s\\S]*?signingConfig\\s+)signingConfigs\\.debug",
+              r"\\1signingConfigs.release",
+              source,
+              count=1,
+          )
+          if count != 1:
+              raise SystemExit("Could not switch the release build to the release signing key.")
+          gradle.write_text(source)
+          PY
+
+      - name: Build signed release APK
         working-directory: android
         env:
           EXPO_PUBLIC_FIREBASE_API_KEY: ${{ secrets.EXPO_PUBLIC_FIREBASE_API_KEY }}
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
 
-      - name: Package APK
+      - name: Package release APK
         id: package
         shell: bash
         run: |
           set -euo pipefail
-          SOURCE_APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          SOURCE_APK="android/app/build/outputs/apk/release/app-release.apk"
           test -s "$SOURCE_APK"
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
             SUFFIX="${GITHUB_REF_NAME}"
           else
-            SUFFIX="${GITHUB_SHA:0:7}"
+            SUFFIX="build-${GITHUB_RUN_NUMBER}-${GITHUB_SHA:0:7}"
           fi
-          APK="Momento-${SUFFIX}-debug.apk"
+          APK="Momento-${SUFFIX}-release.apk"
           cp "$SOURCE_APK" "$APK"
           echo "path=$APK" >> "$GITHUB_OUTPUT"
           echo "name=$APK" >> "$GITHUB_OUTPUT"
 
-      - name: Upload APK artifact
+      - name: Upload release APK artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: Momento-debug-${{ github.sha }}
+          name: Momento-release-${{ github.sha }}
           path: ${{ steps.package.outputs.path }}
           if-no-files-found: error
           retention-days: 30
 
-      - name: Publish tagged APK to GitHub Releases
-        if: startsWith(github.ref, 'refs/tags/momento-v')
+      - name: Publish signed APK to GitHub Releases
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" "${{ steps.package.outputs.path }}" --clobber
+          set -euo pipefail
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            TAG="${GITHUB_REF_NAME}"
           else
-            gh release create "$GITHUB_REF_NAME" "${{ steps.package.outputs.path }}" \
-              --title "Momento $GITHUB_REF_NAME (debug APK)" \
-              --notes "Installable Momento test build. This debug-signed APK is for device testing and is not a Google Play production release." \
-              --verify-tag
+            TAG="momento-build-${GITHUB_RUN_NUMBER}-${GITHUB_SHA:0:7}"
+          fi
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "${{ steps.package.outputs.path }}" --clobber
+          else
+            gh release create "$TAG" "${{ steps.package.outputs.path }}" \
+              --target "$GITHUB_SHA" \
+              --title "Momento signed Android release $TAG" \
+              --notes "Signed release APK for package com.kuldeep.momento. Built from commit $GITHUB_SHA."
           fi
 
       - name: Write build summary
         run: |
           {
-            echo "## Momento Android APK"
+            echo "## Momento Android Release"
             echo
             echo "- Package: com.kuldeep.momento"
-            echo "- Type: debug-signed test APK"
+            echo "- Type: signed release APK"
             echo "- File: ${{ steps.package.outputs.name }}"
-            echo
-            echo "This build is for direct device testing, not Google Play production publishing."
+            echo "- GitHub Release: published"
           } >> "$GITHUB_STEP_SUMMARY"
