@@ -39,7 +39,9 @@ function authError(message: string): Error {
   }
 
   const code = message.split(':')[0].trim()
-  return new Error(knownErrors[code] ?? 'Firebase authentication failed. Please try again.')
+  return new Error(
+    knownErrors[code] ?? 'Firebase authentication failed. Please try again.',
+  )
 }
 
 async function postAuthRequest<T>(
@@ -89,7 +91,12 @@ export function signInWithFirebase(
 /** Exchange a Firebase refresh token for a fresh ID token. */
 export async function refreshFirebaseToken(
   refreshToken: string,
-): Promise<{id_token: string; refresh_token: string; expires_in: string; user_id: string}> {
+): Promise<{
+  id_token: string
+  refresh_token: string
+  expires_in: string
+  user_id: string
+}> {
   assertFirebaseConfigured()
 
   const response = await fetch(
