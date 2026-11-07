@@ -1,7 +1,7 @@
 import {Platform} from 'react-native'
 import {type Client} from '@atproto/lex'
 
-import {DISCOVER_FEED_URI} from '#/lib/constants'
+import {BSKY_APP_ACCOUNT_DID} from '#/lib/constants'
 import {CustomFeedAPI as FollowingV2CustomFeedAPI} from '#/features/followingV2/home/api/custom'
 import {CustomFeedAPI as LegacyCustomFeedAPI} from './custom'
 
@@ -30,6 +30,7 @@ beforeEach(() => fetchMock.mockReset())
 afterAll(() => fetchMock.mockRestore())
 
 const thirdPartyFeed = 'at://did:example:feed/app.bsky.feed.generator/test'
+const BLUESKY_OWNED_FEED_URI = `at://${BSKY_APP_ACCOUNT_DID}/app.bsky.feed.generator/test`
 const feedHeaders = {
   'x-atproto-bsky-platform': Platform.OS,
   'x-atproto-bsky-geo-country': 'JP',
@@ -42,7 +43,7 @@ describe.each([
   ['legacy', LegacyCustomFeedAPI],
   ['following v2', FollowingV2CustomFeedAPI],
 ] as const)('CustomFeedAPI (%s)', (_name, CustomFeedAPI) => {
-  it.each([DISCOVER_FEED_URI, thirdPartyFeed] as const)(
+  it.each([BLUESKY_OWNED_FEED_URI, thirdPartyFeed] as const)(
     'gates platform and geolocation headers for authenticated fetches and peeks: %s',
     async feed => {
       const call = jest.fn().mockResolvedValue({feed: []})
@@ -55,7 +56,7 @@ describe.each([
       await api.fetch({cursor: undefined, limit: 10})
       await expect(api.peekLatest()).resolves.toBeUndefined()
 
-      const owned = feed === DISCOVER_FEED_URI
+      const owned = feed === BLUESKY_OWNED_FEED_URI
       const headers = {
         ...(owned ? feedHeaders : {}),
         'Accept-Language': '',
@@ -104,7 +105,7 @@ describe.each([
     )
   })
 
-  it.each([DISCOVER_FEED_URI, thirdPartyFeed] as const)(
+  it.each([BLUESKY_OWNED_FEED_URI, thirdPartyFeed] as const)(
     'preserves the cursor and gates feed headers on both logged-out attempts: %s',
     async feed => {
       fetchMock
@@ -124,7 +125,7 @@ describe.each([
         const headers = new Headers(init?.headers)
         for (const [key, value] of Object.entries(feedHeaders)) {
           expect(headers.get(key)).toBe(
-            feed === DISCOVER_FEED_URI ? value : null,
+            feed === BLUESKY_OWNED_FEED_URI ? value : null,
           )
         }
       }
