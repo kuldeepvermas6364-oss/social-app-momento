@@ -1,8 +1,9 @@
 import {type Client} from '@atproto/lex'
 
 import {uploadBlob} from '#/lib/api/upload-blob'
+import {createServiceClient} from '#/state/session/clients'
 import {app, com} from '#/lexicons'
-import {getStoryExpiresAt} from './expiry'
+import {isStoryActive, getStoryExpiresAt} from './expiry'
 
 export type StoryMediaType = 'image' | 'video'
 
@@ -76,4 +77,100 @@ export async function deleteStory(
     collection: 'app.momento.story',
     rkey,
   })
+}
+
+export type StoryView = {
+  uri: string
+  cid: string
+  authorDid: string
+  record: app.momento.story.Main
+}
+
+/** Extracts the author's public PDS endpoint from a resolved DID document. */
+export function getPdsEndpoint(didDoc: unknown): string | undefined {
+  if (!didDoc || typeof didDoc !== 'object') return undefined
+  const services = (didDoc as {service?: unknown}).service
+  if (!Array.isArray(services)) return undefined
+
+  const service = services.find(
+    item =>
+      item &&
+      typeof item === 'object' &&
+      (item as {type?: unknown}).type === 'AtprotoPersonalDataServer' &&
+      typeof (item as {serviceEndpoint?: unknown}).serviceEndpoint === 'string',
+  ) as {serviceEndpoint: string} | undefined
+
+  if (!service) return undefined
+
+  try {
+    const endpoint = new URL(service.serviceEndpoint)
+    if (endpoint.protocol !== 'https:') return undefined
+    return endpoint.origin
+  } catch {
+    return undefined
+  }
+}
+
+function isStoryRecord(value: unknown): value is app.momento.story.Main {
+  if (!value || typeof value !== 'object') return false
+  const record = value as Partial<app.momento.story.Main>
+  return (
+    record.$type === 'app.momento.story' &&
+    (record.mediaType === 'image' || record.mediaType === 'video') &&
+    typeof record.createdAt === 'string' &&
+    typeof record.expiresAt === 'string' &&
+    !!record.media
+  )
+}
+
+/**
+ * Reads public stories from followed accounts' PDS repositories. AT Protocol
+ * has no global AppView index for this custom collection, so each author's PDS
+ * is resolved from their DID document and queried directly.
+ */
+export async function listStoriesForAuthors(
+  appviewClient: Client,
+  authorDids: string[],
+  now: number = Date.now(),
+): Promise<StoryView[]> {
+  const uniqueDids = [...new Set(authorDids)].slice(0, 30)
+  const results = await Promise.all(
+    uniqueDids.map(async authorDid => {
+      try {
+        const identity = await appviewClient.call(
+          com.atproto.identity.resolveIdentity,
+          {identifier: authorDid},
+        )
+        const pdsEndpoint = getPdsEndpoint(identity.didDoc)
+        if (!pdsEndpoint) return []
+
+        const pdsClient = createServiceClient(pdsEndpoint)
+        const response = await pdsClient.call(com.atproto.repo.listRecords, {
+          repo: authorDid,
+          collection: 'app.momento.story',
+          limit: 100,
+          reverse: true,
+        })
+
+        return response.records.flatMap(record => {
+          if (!isStoryRecord(record.value)) return []
+          if (!isStoryActive(record.value, now)) return []
+          return [{
+            uri: record.uri,
+            cid: record.cid,
+            authorDid,
+            record: record.value,
+          }]
+        })
+      } catch {
+        // An unavailable or unsupported PDS must not prevent other authors'
+        // stories from loading.
+        return []
+      }
+    }),
+  )
+
+  return results.flat().sort(
+    (a, b) => Date.parse(a.record.createdAt) - Date.parse(b.record.createdAt),
+  )
 }
