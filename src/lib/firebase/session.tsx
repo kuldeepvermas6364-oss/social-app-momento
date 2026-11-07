@@ -135,6 +135,15 @@ export function FirebaseAuthProvider({
       const nextSession = createActiveSession(user)
       sessionRef.current = nextSession
       setSession(nextSession)
+      try {
+        const refreshedProfile = await getFirebaseUserProfile(
+          user.localId,
+          user.idToken,
+        )
+        setCurrentProfile(refreshedProfile)
+      } catch {
+        setCurrentProfile(null)
+      }
       await AsyncStorage.setItem(
         STORAGE_KEY,
         JSON.stringify(toStoredSession(user)),
