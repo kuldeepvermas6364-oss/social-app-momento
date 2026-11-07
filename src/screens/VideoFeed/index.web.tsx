@@ -1,10 +1,22 @@
-import {createElement, useCallback, useEffect, useMemo, useRef, useState} from 'react'
+import {
+  createElement,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import {FlatList, Pressable, useWindowDimensions, View} from 'react-native'
 import {useSafeAreaInsets} from 'react-native-safe-area-context'
 import {Image} from 'expo-image'
 import {type ModerationDecision} from '@bsky/sdk/moderation'
 import {RichText as RichTextAPI} from '@bsky/sdk/richtext'
-import {type RouteProp, useIsFocused, useNavigation, useRoute} from '@react-navigation/native'
+import {
+  type RouteProp,
+  useIsFocused,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native'
 
 import {getCurrentState, useOnAppStateChange} from '#/lib/appState'
 import {createPlaybackDurationTracker} from '#/lib/media/video/analytics'
@@ -12,7 +24,10 @@ import {
   createPlaybackTelemetry,
   type PlaybackTelemetry,
 } from '#/lib/media/video/playbackTelemetry'
-import {type CommonNavigatorParams, type NavigationProp} from '#/lib/routes/types'
+import {
+  type CommonNavigatorParams,
+  type NavigationProp,
+} from '#/lib/routes/types'
 import {POST_TOMBSTONE, usePostShadow} from '#/state/cache/post-shadow'
 import {useProfileShadow} from '#/state/cache/profile-shadow'
 import {
@@ -30,7 +45,10 @@ import {ThemeProvider} from '#/alf'
 import * as Layout from '#/components/Layout'
 import * as Hider from '#/components/moderation/Hider'
 import * as ReportDialogMetadataContext from '#/components/moderation/ReportDialog/ReportDialogMetadataContext'
-import {Provider as ActiveVideoWebProvider, useActiveVideoWeb} from '#/components/Post/Embed/VideoEmbed/ActiveVideoWebContext'
+import {
+  Provider as ActiveVideoWebProvider,
+  useActiveVideoWeb,
+} from '#/components/Post/Embed/VideoEmbed/ActiveVideoWebContext'
 import {VideoEmbedInnerWeb} from '#/components/Post/Embed/VideoEmbed/VideoEmbedInner/VideoEmbedInnerWeb'
 import {PostControls} from '#/components/PostControls'
 import {Text} from '#/components/Typography'
@@ -78,13 +96,22 @@ export function VideoFeed() {
     enabled: isFollowingV2,
   })
   const query = isFollowingV2 ? followingV2Query : legacyQuery
-  const {data, error, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage} = query
+  const {
+    data,
+    error,
+    isLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = query
 
   const videos = useMemo<VideoPost[]>(() => {
     const posts: VideoPost[] = []
     for (const page of data?.pages ?? []) {
       for (const slice of page.slices) {
-        const item = slice.items.find(candidate => candidate.uri === slice.feedPostUri)
+        const item = slice.items.find(
+          candidate => candidate.uri === slice.feedPostUri,
+        )
         const embed = item?.post.embed
         if (item && embed && bsky.isType(app.bsky.embed.video.view, embed)) {
           posts.push({
@@ -98,32 +125,41 @@ export function VideoFeed() {
         }
       }
     }
-    const initialIndex = posts.findIndex(item => item.post.uri === params.initialPostUri)
+    const initialIndex = posts.findIndex(
+      item => item.post.uri === params.initialPostUri,
+    )
     return initialIndex > 0 ? posts.slice(initialIndex) : posts
   }, [data, params.initialPostUri])
 
-  const renderItem = useCallback(({item}: {item: VideoPost}) => (
-    <VideoCard
-      item={item}
-      height={height}
-      routeFocused={isFocused}
-      onOpenAuthor={() => navigation.navigate('Profile', {name: item.post.author.handle})}
-      onOpenPost={() => {
-        const uri = item.post.uri.split('/')
-        navigation.navigate('PostThread', {
-          name: uri[2] ?? item.post.author.handle,
-          rkey: uri[4] ?? '',
-        })
-      }}
-    />
-  ), [height, isFocused, navigation])
+  const renderItem = useCallback(
+    ({item}: {item: VideoPost}) => (
+      <VideoCard
+        item={item}
+        height={height}
+        routeFocused={isFocused}
+        onOpenAuthor={() =>
+          navigation.navigate('Profile', {name: item.post.author.handle})
+        }
+        onOpenPost={() => {
+          const uri = item.post.uri.split('/')
+          navigation.navigate('PostThread', {
+            name: uri[2] ?? item.post.author.handle,
+            rkey: uri[4] ?? '',
+          })
+        }}
+      />
+    ),
+    [height, isFocused, navigation],
+  )
 
   if (isLoading) {
     return <StatusMessage message="Loading videos…" />
   }
 
   if (error) {
-    return <StatusMessage message="Videos could not be loaded. Check your connection and try again." />
+    return (
+      <StatusMessage message="Videos could not be loaded. Check your connection and try again." />
+    )
   }
 
   if (!videos.length) {
@@ -140,7 +176,15 @@ export function VideoFeed() {
         <FeedFeedbackProvider value={feedFeedback}>
           <ActiveVideoWebProvider>
             <View style={{flex: 1, backgroundColor: '#08080b'}}>
-              <View style={{position: 'absolute', top: 0, left: 0, right: 0, zIndex: 50, paddingTop: top}}>
+              <View
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  zIndex: 50,
+                  paddingTop: top,
+                }}>
                 <Header sourceContext={params} />
               </View>
               <FlatList
@@ -160,7 +204,12 @@ export function VideoFeed() {
                 onEndReachedThreshold={1}
                 ListFooterComponent={
                   isFetchingNextPage ? (
-                    <View style={{height: 64, alignItems: 'center', justifyContent: 'center'}}>
+                    <View
+                      style={{
+                        height: 64,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
                       <Text style={{color: 'white'}}>Loading more…</Text>
                     </View>
                   ) : undefined
@@ -176,7 +225,14 @@ export function VideoFeed() {
 
 function StatusMessage({message}: {message: string}) {
   return (
-    <View style={{flex: 1, backgroundColor: '#08080b', alignItems: 'center', justifyContent: 'center', padding: 24}}>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: '#08080b',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 24,
+      }}>
       <Text style={{color: 'white', textAlign: 'center'}}>{message}</Text>
     </View>
   )
@@ -203,7 +259,11 @@ function VideoCard({
   const playbackStartTracked = useRef(false)
   const telemetryRef = useRef<PlaybackTelemetry | null>(null)
   const [onScreen, setOnScreen] = useState(false)
-  const {active: selectedByViewport, setActive, sendPosition} = useActiveVideoWeb()
+  const {
+    active: selectedByViewport,
+    setActive,
+    sendPosition,
+  } = useActiveVideoWeb()
   const {sendInteraction, feedDescriptor} = useFeedFeedbackContext()
   const post = usePostShadow(item.post)
   const profile = useProfileShadow(item.post.author)
@@ -277,7 +337,9 @@ function VideoCard({
         const entry = entries[0]
         if (!entry) return
         setOnScreen(entry.isIntersecting)
-        sendPosition(entry.boundingClientRect.y + entry.boundingClientRect.height / 2)
+        sendPosition(
+          entry.boundingClientRect.y + entry.boundingClientRect.height / 2,
+        )
       },
       {threshold: [0, 0.5, 1]},
     )
@@ -338,7 +400,13 @@ function VideoCard({
   const isOwnProfile = currentAccount?.did === item.post.author.did
 
   return (
-    <View style={{height, width: '100%', backgroundColor: '#08080b', overflow: 'hidden'}}>
+    <View
+      style={{
+        height,
+        width: '100%',
+        backgroundColor: '#08080b',
+        overflow: 'hidden',
+      }}>
       {createElement('div', {
         ref: cardRef,
         'aria-hidden': true,
@@ -350,7 +418,9 @@ function VideoCard({
         </Hider.Mask>
         <Hider.Content>
           <ErrorBoundary
-            renderError={() => <StatusMessage message="This video could not be played. Please try again later." />}>
+            renderError={() => (
+              <StatusMessage message="This video could not be played. Please try again later." />
+            )}>
             <ReportDialogMetadataContext.Provider>
               <VideoEmbedInnerWeb
                 embed={item.embed}
@@ -383,24 +453,54 @@ function VideoCard({
             </ReportDialogMetadataContext.Provider>
           </ErrorBoundary>
 
-          <View pointerEvents="box-none" style={{position: 'absolute', left: 16, right: 16, bottom: 28, gap: 10}}>
+          <View
+            pointerEvents="box-none"
+            style={{
+              position: 'absolute',
+              left: 16,
+              right: 16,
+              bottom: 28,
+              gap: 10,
+            }}>
             <Pressable onPress={onOpenAuthor} accessibilityRole="button">
               <Text style={{color: 'white', fontWeight: '700', fontSize: 16}}>
                 {item.post.author.displayName || item.post.author.handle}
               </Text>
-              <Text style={{color: 'white', opacity: 0.85}}>@{item.post.author.handle}</Text>
+              <Text style={{color: 'white', opacity: 0.85}}>
+                @{item.post.author.handle}
+              </Text>
             </Pressable>
 
-            {record?.text?.trim() ? <Text style={{color: 'white'}}>{record.text}</Text> : null}
+            {record?.text?.trim() ? (
+              <Text style={{color: 'white'}}>{record.text}</Text>
+            ) : null}
 
             {!isOwnProfile ? (
               <Pressable
-                onPress={() => requireAuth(() => isFollowing ? void queueUnfollow() : void queueFollow())}
+                onPress={() =>
+                  requireAuth(() =>
+                    isFollowing ? void queueUnfollow() : void queueFollow(),
+                  )
+                }
                 accessibilityRole="button"
-                accessibilityLabel={isFollowing ? 'Unfollow creator' : 'Follow creator'}
-                accessibilityHint={isFollowing ? 'Stops following this creator' : 'Follows this creator'}
-                style={{alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 12, backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 18}}>
-                <Text style={{color: 'white'}}>{isFollowing ? 'Following' : 'Follow'}</Text>
+                accessibilityLabel={
+                  isFollowing ? 'Unfollow creator' : 'Follow creator'
+                }
+                accessibilityHint={
+                  isFollowing
+                    ? 'Stops following this creator'
+                    : 'Follows this creator'
+                }
+                style={{
+                  alignSelf: 'flex-start',
+                  paddingVertical: 8,
+                  paddingHorizontal: 12,
+                  backgroundColor: 'rgba(0,0,0,0.65)',
+                  borderRadius: 18,
+                }}>
+                <Text style={{color: 'white'}}>
+                  {isFollowing ? 'Following' : 'Follow'}
+                </Text>
               </Pressable>
             ) : null}
 
@@ -425,7 +525,6 @@ function VideoCard({
   )
 }
 
-
 function VideoModerationOverlay({
   embed,
   onPressShow,
@@ -436,23 +535,44 @@ function VideoModerationOverlay({
   const hider = Hider.useHider()
 
   return (
-    <View style={{flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.85)', padding: 24, gap: 12}}>
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(0,0,0,0.85)',
+        padding: 24,
+        gap: 12,
+      }}>
       {embed.thumbnail ? (
         <Image
           source={{uri: embed.thumbnail}}
           blurRadius={80}
-          style={{position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.25}}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            opacity: 0.25,
+          }}
           accessibilityIgnoresInvertColors
         />
       ) : null}
-      <Text style={{color: 'white', textAlign: 'center'}}>Hidden by your moderation settings.</Text>
+      <Text style={{color: 'white', textAlign: 'center'}}>
+        Hidden by your moderation settings.
+      </Text>
       <Pressable
         onPress={() => {
           hider.setIsContentVisible(true)
           onPressShow()
         }}
         accessibilityRole="button"
-        style={{paddingVertical: 10, paddingHorizontal: 18, borderRadius: 20, backgroundColor: 'white'}}>
+        style={{
+          paddingVertical: 10,
+          paddingHorizontal: 18,
+          borderRadius: 20,
+          backgroundColor: 'white',
+        }}>
         <Text style={{color: 'black', fontWeight: '600'}}>Show anyway</Text>
       </Pressable>
     </View>
