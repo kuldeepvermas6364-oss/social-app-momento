@@ -41,12 +41,15 @@
     "preview": {
       "extends": "base",
       "distribution": "internal",
-      "channel": "production",
+      "channel": "momento-preview",
       "ios": {
         "resourceClass": "large"
       },
       "env": {
         "EXPO_PUBLIC_ENV": "production"
+      },
+      "android": {
+        "buildType": "apk"
       }
     },
     "production": {
@@ -54,10 +57,13 @@
       "ios": {
         "resourceClass": "large",
         "autoIncrement": true,
-        "buildArtifactPaths": ["ios/build/*"]
+        "buildArtifactPaths": [
+          "ios/build/*"
+        ]
       },
       "android": {
-        "autoIncrement": true
+        "autoIncrement": true,
+        "buildType": "app-bundle"
       },
       "channel": "production",
       "env": {
@@ -68,7 +74,9 @@
       "extends": "base",
       "ios": {
         "autoIncrement": true,
-        "buildArtifactPaths": ["ios/build/*"]
+        "buildArtifactPaths": [
+          "ios/build/*"
+        ]
       },
       "android": {
         "autoIncrement": true
@@ -82,7 +90,9 @@
       "extends": "base",
       "ios": {
         "autoIncrement": true,
-        "buildArtifactPaths": ["ios/build/*"]
+        "buildArtifactPaths": [
+          "ios/build/*"
+        ]
       },
       "android": {
         "autoIncrement": true
@@ -90,21 +100,6 @@
       "channel": "testflight",
       "env": {
         "EXPO_PUBLIC_ENV": "testflight"
-      }
-    }
-  },
-  "submit": {
-    "production": {
-      "ios": {
-        "ascAppId": "6444370199"
-      },
-      "android": {
-        "track": "production"
-      }
-    },
-    "testflight-android": {
-      "android": {
-        "track": "internal"
       }
     }
   }
