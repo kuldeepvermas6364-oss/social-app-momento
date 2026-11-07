@@ -10,7 +10,7 @@ export class FollowingFeedAPI implements FeedAPI {
     this.client = client
   }
 
-  async peekLatest(): Promise<app.bsky.feed.defs.FeedViewPost> {
+  async peekLatest(): Promise<app.bsky.feed.defs.FeedViewPost | undefined> {
     const data = await this.client.call(app.bsky.feed.getTimeline, {
       limit: 1,
     })
