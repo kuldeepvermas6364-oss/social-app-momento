@@ -38,6 +38,9 @@ export const FALLBACK_MARKER_POST = {
  * a page continues from is its `source`, so the fallback lives in the pages
  * rather than in this instance.
  */
+type PeekLatestOptions = {source?: FeedSource}
+type PeekLatestResult = app.bsky.feed.defs.FeedViewPost | undefined
+
 export class HomeFeedAPI implements FeedAPI {
   following: FollowingFeedAPI
   discover: CustomFeedAPI
@@ -57,11 +60,7 @@ export class HomeFeedAPI implements FeedAPI {
     })
   }
 
-  async peekLatest({
-    source,
-  }: {source?: FeedSource} = {}): Promise<
-    app.bsky.feed.defs.FeedViewPost | undefined
-  > {
+  async peekLatest({source}: PeekLatestOptions = {}): Promise<PeekLatestResult> {
     if (source === 'discover') {
       return this.discover.peekLatest()
     }
