@@ -1,6 +1,7 @@
 import {useMemo} from 'react'
 
 import {FeedTuner} from '#/lib/api/feed-manip'
+import {DISCOVER_FEED_URI} from '#/lib/constants'
 import {type FeedDescriptor} from '../queries/post-feed'
 import {usePreferencesQuery} from '../queries/preferences'
 import {useSession} from '../session'
@@ -19,10 +20,14 @@ export function useFeedTuners(feedDesc: FeedDescriptor) {
       }
     }
     if (feedDesc.startsWith('feedgen')) {
-      return [
+      const feedTuners = [
         FeedTuner.preferredLangOnly(langPrefs.contentLanguages),
         FeedTuner.removeMutedThreads,
       ]
+      if (feedDesc === `feedgen|${DISCOVER_FEED_URI}`) {
+        feedTuners.push(FeedTuner.momentoForYou)
+      }
+      return feedTuners
     }
     if (feedDesc === 'following' || feedDesc.startsWith('list')) {
       const feedTuners = [FeedTuner.removeOrphans]
