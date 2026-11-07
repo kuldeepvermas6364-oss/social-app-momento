@@ -182,10 +182,9 @@ export function FirebaseAuthGate({onDismiss}: {onDismiss?: () => void}) {
           a.py_2xl,
         ]}
         keyboardShouldPersistTaps="handled">
-        <View style={[a.w_full, a.gap_md, {maxWidth: 440, alignSelf: 'center'}]}>
-          <Text style={[a.text_3xl, a.font_bold, t.atoms.text]}>
-            Momento
-          </Text>
+        <View
+          style={[a.w_full, a.gap_md, {maxWidth: 440, alignSelf: 'center'}]}>
+          <Text style={[a.text_3xl, a.font_bold, t.atoms.text]}>Momento</Text>
           {currentUser ? (
             <>
               <Text style={[a.text_xl, a.font_semi_bold, t.atoms.text]}>
