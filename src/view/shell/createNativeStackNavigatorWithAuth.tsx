@@ -33,6 +33,7 @@ import {
   useLoggedOutView,
   useLoggedOutViewControls,
 } from '#/state/shell/logged-out'
+import {FirebaseAccountScreen} from '#/view/com/auth/FirebaseAccountScreen'
 import {LoggedOut} from '#/view/com/auth/LoggedOut'
 import {Onboarding} from '#/screens/Onboarding'
 import {SignupQueued} from '#/screens/SignupQueued'
@@ -196,18 +197,23 @@ function NativeStackNavigator({
 
   // Show the bottom bar if we have a session only on mobile web. If we don't have a session, we want to show it
   // on both tablet and mobile web so that we see the create account CTA.
-  const showBottomBar = hasSession ? isMobile : leftNavMinimal
+  const hasAuthenticatedAccount = hasSession || Boolean(firebaseUser)
+  const showBottomBar = hasAuthenticatedAccount ? isMobile : leftNavMinimal
 
   return (
     <NavigationContent>
       <View role="main" style={a.flex_1}>
-        <NativeStackView
-          {...rest}
-          state={state}
-          navigation={navigation}
-          descriptors={finalDescriptors}
-          describe={describe}
-        />
+        {firebaseUser && !hasSession && activeRoute.name === 'MyProfile' ? (
+          <FirebaseAccountScreen />
+        ) : (
+          <NativeStackView
+            {...rest}
+            state={state}
+            navigation={navigation}
+            descriptors={finalDescriptors}
+            describe={describe}
+          />
+        )}
       </View>
       {IS_WEB && (
         <>
