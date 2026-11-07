@@ -1,24 +1,23 @@
 import {useMemo} from 'react'
-import {AtUri} from '@atproto/syntax'
 import {
   useMutation,
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
 
-import {useProfileFollowsQuery} from '#/state/queries/profile-follows'
-import {STALE} from '#/state/queries'
-import {
-  useAppviewClient,
-  usePdsClient,
-  useSession,
-} from '#/state/session'
 import {
   createStory,
   deleteStory,
   listStoriesForAuthors,
   type StoryAsset,
 } from '#/lib/stories/api'
+import {STALE} from '#/state/queries'
+import {useProfileFollowsQuery} from '#/state/queries/profile-follows'
+import {
+  useAppviewClient,
+  usePdsClient,
+  useSession,
+} from '#/state/session'
 
 export const STORIES_QUERY_KEY = ['momento-stories']
 
@@ -78,8 +77,7 @@ export function useDeleteStoryMutation() {
 
   return useMutation({
     mutationFn: async (uri: string) => {
-      const atUri = new AtUri(uri)
-      await deleteStory(pdsClient, atUri.rkey)
+      await deleteStory(pdsClient, uri)
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({queryKey: STORIES_QUERY_KEY})
