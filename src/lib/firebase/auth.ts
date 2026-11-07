@@ -74,15 +74,12 @@ export function createFirebaseAccount(
   password: string,
   displayName?: string,
 ): Promise<FirebaseAuthUser> {
-  return postAuthRequest<FirebaseAuthUser>(
-    `${IDENTITY_TOOLKIT_URL}:signUp`,
-    {
-      email: email.trim().toLowerCase(),
-      password,
-      ...(displayName ? {displayName: displayName.trim()} : {}),
-      returnSecureToken: true,
-    },
-  )
+  return postAuthRequest<FirebaseAuthUser>(`${IDENTITY_TOOLKIT_URL}:signUp`, {
+    email: email.trim().toLowerCase(),
+    password,
+    ...(displayName ? {displayName: displayName.trim()} : {}),
+    returnSecureToken: true,
+  })
 }
 
 /** Sign in an existing Momento account with Firebase Authentication. */
@@ -97,9 +94,7 @@ export function signInWithFirebase(
 }
 
 /** Exchange a Firebase refresh token for a fresh ID token. */
-export async function refreshFirebaseToken(
-  refreshToken: string,
-): Promise<{
+export async function refreshFirebaseToken(refreshToken: string): Promise<{
   id_token: string
   refresh_token: string
   expires_in: string
@@ -168,7 +163,6 @@ export async function getFirebaseAuthUser(
   return user
 }
 
-
 /** Delete a newly created account when its initial profile cannot be saved. */
 export async function deleteFirebaseAccount(idToken: string): Promise<void> {
   await postAuthRequest<Record<string, never>>(
@@ -176,7 +170,6 @@ export async function deleteFirebaseAccount(idToken: string): Promise<void> {
     {idToken},
   )
 }
-
 
 /** Send a Firebase password-reset email. */
 export async function sendFirebasePasswordResetEmail(
