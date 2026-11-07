@@ -60,7 +60,9 @@ export class HomeFeedAPI implements FeedAPI {
     })
   }
 
-  async peekLatest({source}: PeekLatestOptions = {}): Promise<PeekLatestResult> {
+  async peekLatest({
+    source,
+  }: PeekLatestOptions = {}): Promise<PeekLatestResult> {
     if (source === 'discover') {
       return this.discover.peekLatest()
     }
