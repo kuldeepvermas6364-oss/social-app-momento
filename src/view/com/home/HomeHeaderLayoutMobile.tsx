@@ -108,9 +108,6 @@ export function HomeHeaderLayoutMobile({
                   variant="ghost"
                   color="secondary"
                   shape="square"
-                  onPress={() => {
-                    ax.metric('nav:click', {item: 'stories', surface: 'topBar'})
-                  }}
                   style={[a.justify_center, a.bg_transparent]}>
                   <ButtonIcon icon={CameraIcon} size="lg" />
                 </Link>
