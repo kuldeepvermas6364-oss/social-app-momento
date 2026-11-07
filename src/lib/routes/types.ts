@@ -112,6 +112,7 @@ export type CommonNavigatorParams = {
   }
   StarterPackEdit: {rkey?: string}
   VideoFeed: VideoFeedSourceContext
+  Stories: undefined
   Bookmarks: undefined
   FindContactsFlow: undefined
 }
