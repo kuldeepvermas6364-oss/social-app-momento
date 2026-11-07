@@ -58,7 +58,9 @@ export function FirebaseAccountScreen() {
           Your account
         </Text>
         <Text style={[a.text_md, t.atoms.text]}>
-          {currentProfile?.displayName || currentUser?.displayName || currentUser?.email}
+          {currentProfile?.displayName ||
+            currentUser?.displayName ||
+            currentUser?.email}
         </Text>
         {currentProfile?.username ? (
           <Text style={[a.text_sm, t.atoms.text_contrast_medium]}>
