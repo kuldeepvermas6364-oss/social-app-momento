@@ -137,6 +137,16 @@ describe('HomeFeedAPI', () => {
     expect(requested()).toEqual(['discover next'])
   })
 
+  it('returns undefined when the requested feed is empty', async () => {
+    const call = jest.fn().mockResolvedValue({feed: []})
+    const api = new HomeFeedAPI({
+      client: {did: 'did:plc:viewer', call} as unknown as Client,
+    })
+
+    await expect(api.peekLatest()).resolves.toBeUndefined()
+    await expect(api.peekLatest({source: 'discover'})).resolves.toBeUndefined()
+  })
+
   it('peeks at the source it is given', async () => {
     const {api, requested} = createHomeApi()
 
