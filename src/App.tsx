@@ -235,7 +235,7 @@ function App() {
   return (
     <FirebaseAuthProvider>
       <Geo.Provider>
-      <AppConfigProvider>
+        <AppConfigProvider>
         <A11yProvider>
           <KeyboardControllerProvider preload={false}>
             <OnboardingProvider>
@@ -266,7 +266,7 @@ function App() {
             </OnboardingProvider>
           </KeyboardControllerProvider>
         </A11yProvider>
-      </AppConfigProvider>
+        </AppConfigProvider>
       </Geo.Provider>
     </FirebaseAuthProvider>
   )
