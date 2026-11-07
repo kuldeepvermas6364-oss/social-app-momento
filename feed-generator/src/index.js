@@ -4,7 +4,7 @@
  * This service ranks public candidate posts from the Bluesky AppView.
  * It deliberately excludes Momento Story records from the public For You feed.
  */
-const APPVIEW = "https://public.api.bsky.app";
+const APPVIEW = "https://api.bsky.app";
 const FEED_RKEY = "for-you";
 const FEED_URI = "app.bsky.feed.generator/" + FEED_RKEY;
 const QUERIES = ["photography", "art", "technology", "music", "India"];
