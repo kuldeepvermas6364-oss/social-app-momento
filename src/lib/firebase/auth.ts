@@ -36,7 +36,8 @@ function authError(message: string): Error {
       'Email and password sign-in is not enabled for this Firebase project.',
     TOKEN_EXPIRED: 'Your sign-in session expired. Please sign in again.',
     INVALID_ID_TOKEN: 'Your sign-in session expired. Please sign in again.',
-    INVALID_REFRESH_TOKEN: 'Your sign-in session expired. Please sign in again.',
+    INVALID_REFRESH_TOKEN:
+      'Your sign-in session expired. Please sign in again.',
   }
 
   const code = message.split(':')[0].trim()
