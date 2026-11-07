@@ -1,4 +1,5 @@
 import {useEffect, useMemo, useState} from 'react'
+import {type BlobRef} from '@atproto/lex'
 import {
   ActivityIndicator,
   Alert,
@@ -11,24 +12,32 @@ import {
 } from 'react-native'
 import {type AtIdentifierString} from '@atproto/syntax'
 import {Image} from 'expo-image'
-import {launchImageLibraryAsync} from 'expo-image-picker'
 import {createVideoPlayer, VideoView} from 'expo-video'
+import {type ImagePickerAsset, launchImageLibraryAsync} from 'expo-image-picker'
 
 import * as Layout from '#/components/Layout'
+import {IMAGE_SIZE_CONFIG_POSTS} from '#/lib/constants'
 import {getStoryMediaType, type StoryView} from '#/lib/stories/api'
+import {compressImage, createComposerImage} from '#/state/gallery'
+import {createVideoTelemetry} from '#/lib/media/video/telemetry'
+import {processVideo} from '#/view/com/composer/state/video'
 import {useProfilesQuery} from '#/state/queries/profile'
 import {
   useCreateStoryMutation,
   useDeleteStoryMutation,
   useStoriesQuery,
 } from '#/state/queries/stories'
-import {useSession} from '#/state/session'
+import {usePdsClient, useSession} from '#/state/session'
+import {useAnalytics} from '#/analytics'
+import {useLingui} from '@lingui/react'
 
-const MAX_IMAGE_BYTES = 2_000_000
 const MAX_VIDEO_BYTES = 100_000_000
 
 export function StoriesScreen() {
   const {currentAccount} = useSession()
+  const pdsClient = usePdsClient()
+  const ax = useAnalytics()
+  const {i18n} = useLingui()
   const storiesQuery = useStoriesQuery()
   const createMutation = useCreateStoryMutation()
   const deleteMutation = useDeleteStoryMutation()
@@ -66,17 +75,36 @@ export function StoriesScreen() {
         asset.mimeType ??
         (asset.uri.toLowerCase().endsWith('.mp4') ? 'video/mp4' : 'image/jpeg')
       const mediaType = getStoryMediaType(mime)
-      const maxBytes = mediaType === 'image' ? MAX_IMAGE_BYTES : MAX_VIDEO_BYTES
-      if (asset.fileSize && asset.fileSize > maxBytes) {
-        throw new Error(
-          mediaType === 'image'
-            ? 'Images must be 2 MB or smaller.'
-            : 'Videos must be 100 MB or smaller.',
+      if (asset.fileSize && mediaType === 'video' && asset.fileSize > MAX_VIDEO_BYTES) {
+        throw new Error('Videos must be 100 MB or smaller.')
+      }
+
+      let storyAsset = {path: asset.uri, mime}
+      if (mediaType === 'image') {
+        const image = await createComposerImage({
+          path: asset.uri,
+          width: asset.width,
+          height: asset.height,
+          mime,
+        })
+        const compressed = await compressImage(image, IMAGE_SIZE_CONFIG_POSTS)
+        storyAsset = {path: compressed.path, mime: compressed.mime}
+      } else {
+        if (!currentAccount?.pdsUrl) {
+          throw new Error('Your account PDS is unavailable for video upload.')
+        }
+        const blob = await uploadStoryVideo(
+          asset,
+          pdsClient,
+          currentAccount.pdsUrl,
+          i18n,
+          (event, payload) => ax.metric(event, payload),
         )
+        storyAsset = {path: asset.uri, mime, blob}
       }
 
       await createMutation.mutateAsync({
-        asset: {path: asset.uri, mime},
+        asset: storyAsset,
         caption: caption.trim(),
         altText: mediaType === 'image' ? caption.trim() : undefined,
       })
@@ -236,7 +264,7 @@ export function StoriesScreen() {
                   padding: 16,
                   fontSize: 16,
                 }}>
-                {selectedStory.record.caption}
+                {selectedStory.record.text}
               </RNText>
             ) : null}
             <View
@@ -288,4 +316,36 @@ function StoryVideo({story}: {story: StoryView}) {
       style={{flex: 1}}
     />
   )
+}
+
+
+async function uploadStoryVideo(
+  asset: ImagePickerAsset,
+  pdsClient: ReturnType<typeof usePdsClient>,
+  dispatchUrl: string,
+  i18n: ReturnType<typeof useLingui>['i18n'],
+  metric: Parameters<typeof createVideoTelemetry>[0]['metric'],
+): Promise<BlobRef> {
+  const controller = new AbortController()
+  const telemetry = createVideoTelemetry({asset, signal: controller.signal, metric})
+  telemetry.picked()
+
+  return await new Promise((resolve, reject) => {
+    void processVideo(
+      asset,
+      action => {
+        if (action.type === 'to_done') {
+          telemetry.published()
+          resolve(action.blobRef)
+        } else if (action.type === 'to_error') {
+          reject(new Error(action.error))
+        }
+      },
+      pdsClient,
+      dispatchUrl,
+      controller.signal,
+      i18n,
+      telemetry,
+    ).catch(reject)
+  })
 }
