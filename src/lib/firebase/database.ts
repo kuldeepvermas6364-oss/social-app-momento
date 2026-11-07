@@ -27,8 +27,7 @@ function databaseUrl(path: string, idToken: string): string {
 
 async function parseDatabaseResponse<T>(response: Response): Promise<T> {
   const data = (await response.json().catch(() => null)) as
-    | (T & FirebaseDatabaseError)
-    | null
+    (T & FirebaseDatabaseError) | null
   if (!response.ok) {
     throw new Error(
       data && typeof data.error === 'string'
