@@ -56,10 +56,9 @@ module.exports = function (_config) {
   return {
     expo: {
       version: VERSION,
-      name: 'Bluesky',
-      slug: 'bluesky',
-      scheme: 'bluesky',
-      owner: 'blueskysocial',
+      name: 'Momento',
+      slug: 'momento',
+      scheme: 'momento',
       runtimeVersion: {
         policy: 'appVersion',
       },
@@ -91,7 +90,7 @@ module.exports = function (_config) {
             'Used to save images to your library.',
           NSPhotoLibraryUsageDescription:
             'Used for profile pictures, posts, and other kinds of content',
-          CFBundleSpokenName: 'Blue Sky',
+          CFBundleSpokenName: 'Momento',
           CFBundleLocalizations: [
             'en',
             'an',
@@ -204,8 +203,7 @@ module.exports = function (_config) {
           monochromeImage: './assets/icon-android-monochrome.png',
           backgroundColor: '#006AFF',
         },
-        googleServicesFile: './google-services.json',
-        package: 'xyz.blueskyweb.app',
+        package: 'com.kuldeep.momento',
         blockedPermissions: ['android.permission.ACCESS_FINE_LOCATION'],
         intentFilters: [
           {
@@ -214,7 +212,6 @@ module.exports = function (_config) {
             data: [
               {
                 scheme: 'https',
-                host: 'bsky.app',
               },
               ...(IS_DEV
                 ? [
@@ -234,18 +231,8 @@ module.exports = function (_config) {
         favicon: './assets/favicon.png',
       },
       updates: {
-        url: 'https://updates.bsky.app/manifest',
-        enabled: UPDATES_ENABLED,
+        enabled: false,
         fallbackToCacheTimeout: 30000,
-        codeSigningCertificate: UPDATES_ENABLED
-          ? './code-signing/certificate.pem'
-          : undefined,
-        codeSigningMetadata: UPDATES_ENABLED
-          ? {
-              keyid: 'main',
-              alg: 'rsa-v1_5-sha256',
-            }
-          : undefined,
         checkAutomatically: 'NEVER',
       },
       plugins: [
@@ -309,7 +296,7 @@ module.exports = function (_config) {
               {
                 name: 'TrendingTopicsWidget',
                 displayName: 'Trending Topics',
-                description: 'See what people are talking about on Bluesky.',
+                description: 'See what people are talking about on Momento.',
                 ios: {
                   contentMarginsDisabled: true,
                   supportedFamilies: [
