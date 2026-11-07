@@ -38,7 +38,7 @@ function authError(message: string): Error {
     INVALID_REFRESH_TOKEN: 'Your sign-in session expired. Please sign in again.',
   }
 
-  const code = message.split(':')[0]
+  const code = message.split(':')[0].trim()
   return new Error(knownErrors[code] ?? 'Firebase authentication failed. Please try again.')
 }
 
@@ -131,11 +131,24 @@ export async function refreshFirebaseToken(
 }
 
 /** Read the authenticated Firebase user profile from the Identity Toolkit. */
+export type FirebaseAuthProfile = {
+  localId: string
+  email: string
+  displayName?: string
+  photoUrl?: string
+  emailVerified: boolean
+}
+
 export async function getFirebaseAuthUser(
   idToken: string,
-): Promise<FirebaseAuthUser> {
-  return postAuthRequest<FirebaseAuthUser>(
-    `${IDENTITY_TOOLKIT_URL}:lookup`,
-    {idToken},
-  )
+): Promise<FirebaseAuthProfile> {
+  const response = await postAuthRequest<{
+    users?: FirebaseAuthProfile[]
+  }>(`${IDENTITY_TOOLKIT_URL}:lookup`, {idToken})
+
+  const user = response.users?.[0]
+  if (!user) {
+    throw new Error('Firebase did not return the signed-in user profile.')
+  }
+  return user
 }
