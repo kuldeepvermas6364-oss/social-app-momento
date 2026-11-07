@@ -9,7 +9,7 @@ type GetPostsParams = XrpcRequestParams<typeof app.bsky.feed.getPosts.main>
 export class PostListFeedAPI implements FeedAPI {
   client: Client
   params: GetPostsParams
-  peek: app.bsky.feed.defs.FeedViewPost | null = null
+  peek: app.bsky.feed.defs.FeedViewPost | null | undefined = null
 
   constructor({
     client,
@@ -29,9 +29,11 @@ export class PostListFeedAPI implements FeedAPI {
     }
   }
 
-  async peekLatest(): Promise<app.bsky.feed.defs.FeedViewPost> {
-    if (this.peek) return this.peek
-    throw new Error('Has not fetched yet')
+  async peekLatest(): Promise<app.bsky.feed.defs.FeedViewPost | undefined> {
+    if (this.peek === null) {
+      throw new Error('Has not fetched yet')
+    }
+    return this.peek
   }
 
   async fetch({}: {}): Promise<FeedAPIResponse> {
@@ -44,7 +46,7 @@ export class PostListFeedAPI implements FeedAPI {
     const data = await this.client.call(app.bsky.feed.getPosts, {
       ...this.params,
     })
-    this.peek = {post: data.posts[0]}
+    this.peek = data.posts[0] ? {post: data.posts[0]} : undefined
     return {
       feed: data.posts.map(post => ({post})),
     }
