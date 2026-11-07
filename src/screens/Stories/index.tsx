@@ -9,21 +9,23 @@ import {
   TextInput,
   View,
 } from 'react-native'
+import {type AtIdentifierString} from '@atproto/syntax'
 import {Image} from 'expo-image'
 import {launchImageLibraryAsync} from 'expo-image-picker'
 import {createVideoPlayer, VideoView} from 'expo-video'
 
+import * as Layout from '#/components/Layout'
 import {getStoryMediaType, type StoryView} from '#/lib/stories/api'
+import {useProfilesQuery} from '#/state/queries/profile'
 import {
   useCreateStoryMutation,
   useDeleteStoryMutation,
   useStoriesQuery,
 } from '#/state/queries/stories'
-import {useProfilesQuery} from '#/state/queries/profile'
 import {useSession} from '#/state/session'
-import * as Layout from '#/components/Layout'
 
-const MAX_STORY_BYTES = 100_000_000
+const MAX_IMAGE_BYTES = 2_000_000
+const MAX_VIDEO_BYTES = 100_000_000
 
 export function StoriesScreen() {
   const {currentAccount} = useSession()
@@ -39,7 +41,7 @@ export function StoriesScreen() {
     [stories],
   )
   const profilesQuery = useProfilesQuery({
-    handles: authorDids,
+    handles: authorDids as AtIdentifierString[],
     maintainData: true,
   })
   const profiles = profilesQuery.data?.profiles ?? []
@@ -64,8 +66,13 @@ export function StoriesScreen() {
         asset.mimeType ??
         (asset.uri.toLowerCase().endsWith('.mp4') ? 'video/mp4' : 'image/jpeg')
       const mediaType = getStoryMediaType(mime)
-      if (asset.fileSize && asset.fileSize > MAX_STORY_BYTES) {
-        throw new Error('Story media must be 100 MB or smaller.')
+      const maxBytes = mediaType === 'image' ? MAX_IMAGE_BYTES : MAX_VIDEO_BYTES
+      if (asset.fileSize && asset.fileSize > maxBytes) {
+        throw new Error(
+          mediaType === 'image'
+            ? 'Images must be 2 MB or smaller.'
+            : 'Videos must be 100 MB or smaller.',
+        )
       }
 
       await createMutation.mutateAsync({
@@ -140,7 +147,10 @@ export function StoriesScreen() {
         ) : storiesQuery.isError ? (
           <View style={{gap: 8}}>
             <RNText>Stories could not be loaded.</RNText>
-            <Pressable onPress={() => void storiesQuery.refetch()}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => void storiesQuery.refetch()}
+            >
               <RNText style={{color: '#6652d9', fontWeight: '600'}}>Try again</RNText>
             </Pressable>
           </View>
@@ -163,9 +173,10 @@ export function StoriesScreen() {
                       key={story.uri}
                       accessibilityRole="button"
                       accessibilityLabel={`Open story by ${label}`}
+                      accessibilityHint="Opens this story"
                       onPress={() => setSelectedStory(story)}
                       style={{width: 124, gap: 6}}>
-                      {story.record.mediaType === 'image' ? (
+                      {story.mediaType === 'image' ? (
                         <Image
                           source={{uri: story.mediaUrl}}
                           contentFit="cover"
@@ -208,7 +219,7 @@ export function StoriesScreen() {
         statusBarTranslucent>
         {selectedStory ? (
           <View style={{flex: 1, backgroundColor: 'black'}}>
-            {selectedStory.record.mediaType === 'image' ? (
+            {selectedStory.mediaType === 'image' ? (
               <Image
                 source={{uri: selectedStory.mediaUrl}}
                 contentFit="contain"
@@ -217,7 +228,7 @@ export function StoriesScreen() {
             ) : (
               <StoryVideo story={selectedStory} />
             )}
-            {selectedStory.record.caption ? (
+            {selectedStory.record.text ? (
               <RNText
                 style={{
                   color: 'white',
@@ -237,11 +248,15 @@ export function StoriesScreen() {
                 flexDirection: 'row',
                 justifyContent: 'space-between',
               }}>
-              <Pressable onPress={() => setSelectedStory(undefined)}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setSelectedStory(undefined)}
+              >
                 <RNText style={{color: 'white', fontSize: 18}}>Close ✕</RNText>
               </Pressable>
               {selectedStory.authorDid === currentAccount?.did ? (
                 <Pressable
+                  accessibilityRole="button"
                   disabled={deleteMutation.isPending}
                   onPress={() => void onDeleteStory(selectedStory)}>
                   <RNText style={{color: 'white', fontSize: 16}}>
