@@ -70,10 +70,16 @@ async function postAuthRequest<T>(
 export function createFirebaseAccount(
   email: string,
   password: string,
+  displayName?: string,
 ): Promise<FirebaseAuthUser> {
   return postAuthRequest<FirebaseAuthUser>(
     `${IDENTITY_TOOLKIT_URL}:signUp`,
-    {email: email.trim().toLowerCase(), password, returnSecureToken: true},
+    {
+      email: email.trim().toLowerCase(),
+      password,
+      ...(displayName ? {displayName: displayName.trim()} : {}),
+      returnSecureToken: true,
+    },
   )
 }
 
