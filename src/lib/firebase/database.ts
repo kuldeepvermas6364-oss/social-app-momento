@@ -20,7 +20,9 @@ function databaseUrl(path: string, idToken: string): string {
     .filter(Boolean)
     .map(encodeURIComponent)
     .join('/')
-  return `${firebaseConfig.databaseURL}/${normalizedPath}.json?auth=${encodeURIComponent(idToken)}`
+  return `${firebaseConfig.databaseURL}/${normalizedPath}.json?auth=${encodeURIComponent(
+    idToken,
+  )}`
 }
 
 async function parseDatabaseResponse<T>(response: Response): Promise<T> {
