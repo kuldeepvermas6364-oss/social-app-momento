@@ -68,7 +68,7 @@ export class HomeFeedAPI implements FeedAPI {
     this.itemCursor = 0
   }
 
-  async peekLatest(): Promise<app.bsky.feed.defs.FeedViewPost> {
+  async peekLatest(): Promise<app.bsky.feed.defs.FeedViewPost | undefined> {
     if (this.usingDiscover) {
       return this.discover.peekLatest()
     }
