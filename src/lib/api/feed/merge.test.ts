@@ -1,13 +1,14 @@
 import {Platform} from 'react-native'
 import {type Client} from '@atproto/lex'
 
-import {DISCOVER_FEED_URI} from '#/lib/constants'
+import {BSKY_APP_ACCOUNT_DID} from '#/lib/constants'
 import {getContentLanguages} from '#/state/preferences/languages'
 import {app} from '#/lexicons'
 import {device} from '#/storage'
 import {MergeFeedAPI} from './merge'
 
 const post = {} as app.bsky.feed.defs.FeedViewPost
+const BLUESKY_OWNED_FEED_URI = `at://${BSKY_APP_ACCOUNT_DID}/app.bsky.feed.generator/test`
 
 describe('MergeFeedAPI', () => {
   it('returns undefined when the following timeline is empty', async () => {
@@ -37,7 +38,7 @@ describe('MergeFeedAPI', () => {
       client: {call} as unknown as Client,
       feedParams: {
         mergeFeedEnabled: true,
-        mergeFeedSources: [DISCOVER_FEED_URI, thirdPartyFeed],
+        mergeFeedSources: [BLUESKY_OWNED_FEED_URI, thirdPartyFeed],
       },
       feedTuners: [],
       userInterests: 'music',
@@ -51,7 +52,7 @@ describe('MergeFeedAPI', () => {
       expect(call).toHaveBeenCalledTimes(2)
       expect(call).toHaveBeenCalledWith(
         app.bsky.feed.getFeed,
-        expect.objectContaining({feed: DISCOVER_FEED_URI}),
+        expect.objectContaining({feed: BLUESKY_OWNED_FEED_URI}),
         {
           headers: {
             'x-atproto-bsky-platform': Platform.OS,
