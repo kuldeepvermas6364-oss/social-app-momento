@@ -9,14 +9,14 @@ import {
   useState,
 } from 'react'
 
+import {createMomentoAccount, type CreateMomentoAccountInput} from './account'
 import {
   getFirebaseAuthUser,
   refreshFirebaseToken,
-  signInWithFirebase,
   sendFirebasePasswordResetEmail,
+  signInWithFirebase,
   type FirebaseAuthUser,
 } from './auth'
-import {createMomentoAccount, type CreateMomentoAccountInput} from './account'
 
 const STORAGE_KEY = 'MOMENTO_FIREBASE_SESSION'
 const REFRESH_MARGIN_MS = 60_000
@@ -234,7 +234,6 @@ export function useFirebaseAuth(): FirebaseAuthContextValue {
   }
   return context
 }
-
 
 /** Optional access for transitional screens and isolated component tests. */
 export function useMaybeFirebaseAuth(): FirebaseAuthContextValue | null {
