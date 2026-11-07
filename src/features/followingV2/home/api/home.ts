@@ -59,7 +59,7 @@ export class HomeFeedAPI implements FeedAPI {
 
   async peekLatest({
     source,
-  }: {source?: FeedSource} = {}): Promise<app.bsky.feed.defs.FeedViewPost> {
+  }: {source?: FeedSource} = {}): Promise<app.bsky.feed.defs.FeedViewPost | undefined> {
     if (source === 'discover') {
       return this.discover.peekLatest()
     }
