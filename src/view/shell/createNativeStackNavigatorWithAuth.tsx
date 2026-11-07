@@ -26,6 +26,7 @@ import {
 } from '@react-navigation/native-stack'
 
 import {useWebMediaQueries} from '#/lib/hooks/useWebMediaQueries'
+import {useMaybeFirebaseAuth} from '#/lib/firebase/session'
 import {useSession} from '#/state/session'
 import {useOnboardingState} from '#/state/shell'
 import {
@@ -113,6 +114,7 @@ function NativeStackNavigator({
   // Web LRU: tracks route keys in most-recently-focused order
   const lruKeysRef = useRef<string[]>([])
   const {hasSession, currentAccount} = useSession()
+  const firebaseUser = useMaybeFirebaseAuth()?.currentUser
   const activeRoute = state.routes[state.index]
   const activeDescriptor = descriptors[activeRoute.key]
   const activeRouteRequiresAuth = activeDescriptor.options.requireAuth ?? false
@@ -121,7 +123,7 @@ function NativeStackNavigator({
   const {setShowLoggedOut} = useLoggedOutViewControls()
   const {isMobile} = useWebMediaQueries()
   const {leftNavMinimal} = useLayoutBreakpoints()
-  if (!hasSession && (activeRouteRequiresAuth || IS_NATIVE)) {
+  if ((!firebaseUser || !hasSession) && (activeRouteRequiresAuth || IS_NATIVE)) {
     return <LoggedOut />
   }
   if (hasSession && currentAccount?.signupQueued) {
