@@ -100,15 +100,20 @@ jobs:
               source, count = re.subn(r"signingConfigs\s*\{", signing_block, source, count=1)
               if count != 1:
                   raise SystemExit("Could not add the release signing configuration.")
-          source, count = re.subn(
+          build_types_index = source.find("buildTypes {")
+          if build_types_index < 0:
+              raise SystemExit("Could not find Android buildTypes configuration.")
+          before_build_types = source[:build_types_index]
+          build_types = source[build_types_index:]
+          build_types, count = re.subn(
               r"(release\s*\{[\s\S]*?signingConfig\s+)signingConfigs\.debug",
               r"\1signingConfigs.release",
-              source,
+              build_types,
               count=1,
           )
           if count != 1:
               raise SystemExit("Could not switch the release build to the release signing key.")
-          gradle.write_text(source)
+          gradle.write_text(before_build_types + build_types)
           PY
 
       - name: Build signed release APK
