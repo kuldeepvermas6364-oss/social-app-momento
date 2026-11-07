@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import {
   createContext,
   useCallback,
@@ -8,9 +7,9 @@ import {
   useRef,
   useState,
 } from 'react'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
-import {type CreateMomentoAccountInput, createMomentoAccount} from './account'
-import {getFirebaseUserProfile, type FirebaseUserProfile} from './database'
+import {createMomentoAccount, type CreateMomentoAccountInput} from './account'
 import {
   type FirebaseAuthUser,
   getFirebaseAuthUser,
@@ -18,6 +17,7 @@ import {
   sendFirebasePasswordResetEmail,
   signInWithFirebase,
 } from './auth'
+import {type FirebaseUserProfile, getFirebaseUserProfile} from './database'
 
 const STORAGE_KEY = 'MOMENTO_FIREBASE_SESSION'
 const REFRESH_MARGIN_MS = 60_000
@@ -66,11 +66,10 @@ function toStoredSession(user: FirebaseAuthUser): StoredFirebaseSession {
   }
 }
 
-export function FirebaseAuthProvider({
-  children,
-}: React.PropsWithChildren<{}>) {
+export function FirebaseAuthProvider({children}: React.PropsWithChildren<{}>) {
   const [session, setSession] = useState<ActiveFirebaseSession | null>(null)
-  const [currentProfile, setCurrentProfile] = useState<FirebaseUserProfile | null>(null)
+  const [currentProfile, setCurrentProfile] =
+    useState<FirebaseUserProfile | null>(null)
   const [isReady, setIsReady] = useState(false)
   const sessionRef = useRef<ActiveFirebaseSession | null>(null)
 
