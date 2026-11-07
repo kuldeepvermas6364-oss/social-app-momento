@@ -159,6 +159,7 @@ export function StoriesScreen() {
 
         <TextInput
           accessibilityLabel="Story caption"
+          accessibilityHint="Optional caption for your story"
           value={caption}
           onChangeText={value => setCaption(value.slice(0, 300))}
           placeholder="Add a short caption (optional)"
