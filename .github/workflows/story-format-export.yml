@@ -1,4 +1,4 @@
-name: Temporary Story Prettier Export
+name: Temporary Story Prettier Fix
 
 on:
   push:
@@ -6,25 +6,33 @@ on:
       - '.github/workflows/story-format-export.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   format:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
         with:
           version: 11.28.5
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24.22.1
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec prettier --write src/lib/stories/api.ts src/screens/Stories/index.tsx
-      - uses: actions/upload-artifact@v4
-        with:
-          name: story-prettier-output
-          path: |
-            src/lib/stories/api.ts
-            src/screens/Stories/index.tsx
+      - name: Format Stories sources and commit the result
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          pnpm exec prettier --write src/lib/stories/api.ts src/screens/Stories/index.tsx
+          if git diff --quiet -- src/lib/stories/api.ts src/screens/Stories/index.tsx; then
+            echo "No formatting changes needed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/lib/stories/api.ts src/screens/Stories/index.tsx
+          git commit -m "style(stories): apply Prettier formatting"
+          git push origin HEAD:main
