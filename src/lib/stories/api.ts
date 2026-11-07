@@ -1,9 +1,15 @@
 import {type Client} from '@atproto/lex'
+import {
+  type AtIdentifierString,
+  AtUri,
+  toDatetimeString,
+} from '@atproto/syntax'
 
 import {uploadBlob} from '#/lib/api/upload-blob'
-import {createServiceClient} from '#/state/session/clients'
 import {app, com} from '#/lexicons'
-import {isStoryActive, getStoryExpiresAt} from './expiry'
+import {getStoryExpiresAt, isStoryActive} from './expiry'
+
+export const MOMENTO_STORY_TAG = 'momento-story'
 
 export type StoryMediaType = 'image' | 'video'
 
@@ -20,7 +26,16 @@ export type CreateStoryOptions = {
   createdAt?: Date
 }
 
-/** Maps only media formats supported by the Momento story lexicon. */
+export type StoryView = {
+  uri: string
+  cid: string
+  authorDid: string
+  record: app.bsky.feed.post.Main
+  mediaType: StoryMediaType
+  mediaUrl: string
+}
+
+/** Maps only media formats supported by the standard AT Protocol embeds. */
 export function getStoryMediaType(mime: string): StoryMediaType {
   if (mime.startsWith('image/')) return 'image'
   if (mime === 'video/mp4') return 'video'
@@ -28,8 +43,9 @@ export function getStoryMediaType(mime: string): StoryMediaType {
 }
 
 /**
- * Uploads story media to the author's PDS and writes an AT Protocol record.
- * Story records are public; expiry is enforced by clients at 24 hours.
+ * Stories use standard app.bsky.feed.post records and media embeds so normal
+ * AT Protocol PDS and AppView infrastructure can store and index them. The
+ * Momento tag distinguishes story posts from ordinary feed posts.
  */
 export async function createStory({
   pdsClient,
@@ -43,90 +59,67 @@ export async function createStory({
     throw new TypeError('Story media path is required')
   }
 
-  const createdAtIso = createdAt.toISOString()
   const {blob} = await uploadBlob(pdsClient, asset.path, asset.mime)
-  const record: app.momento.story.Main = {
-    $type: 'app.momento.story',
-    media: blob,
-    mediaType,
-    createdAt: createdAtIso,
-    expiresAt: getStoryExpiresAt(createdAtIso),
-    caption: caption?.trim().slice(0, 300) || undefined,
-    altText: altText?.trim().slice(0, 1000) || undefined,
+  const embed: app.bsky.feed.post.Main['embed'] =
+    mediaType === 'image'
+      ? {
+          $type: 'app.bsky.embed.images',
+          images: [
+            {
+              alt: altText?.trim().slice(0, 1000) || caption?.trim() || '',
+              image: blob,
+            },
+          ],
+        }
+      : {
+          $type: 'app.bsky.embed.video',
+          video: blob,
+          alt: altText?.trim().slice(0, 1000) || caption?.trim() || undefined,
+        }
+
+  const record: app.bsky.feed.post.Main = {
+    $type: 'app.bsky.feed.post',
+    text: caption?.trim().slice(0, 300) || '',
+    createdAt: toDatetimeString(createdAt),
+    tags: [MOMENTO_STORY_TAG],
+    embed,
   }
 
   return await pdsClient.call(com.atproto.repo.createRecord, {
     repo: pdsClient.assertDid,
-    collection: 'app.momento.story',
+    collection: 'app.bsky.feed.post',
     record,
   })
 }
 
-/** Deletes one of the signed-in author's story records from their PDS. */
+/** Deletes a Momento story post from the signed-in author's repository. */
 export async function deleteStory(
   pdsClient: Client,
-  rkey: string,
+  uri: string,
 ): Promise<void> {
-  if (!rkey) {
-    throw new TypeError('Story record key is required')
+  const atUri = new AtUri(uri)
+  if (atUri.collection !== 'app.bsky.feed.post' || !atUri.rkey) {
+    throw new TypeError('Invalid Momento story URI')
   }
 
   await pdsClient.call(com.atproto.repo.deleteRecord, {
     repo: pdsClient.assertDid,
-    collection: 'app.momento.story',
-    rkey,
+    collection: 'app.bsky.feed.post',
+    rkey: atUri.rkey,
   })
 }
 
-export type StoryView = {
-  uri: string
-  cid: string
-  authorDid: string
-  record: app.momento.story.Main
-  mediaUrl: string
-}
-
-/** Extracts the author's public PDS endpoint from a resolved DID document. */
-export function getPdsEndpoint(didDoc: unknown): string | undefined {
-  if (!didDoc || typeof didDoc !== 'object') return undefined
-  const services = (didDoc as {service?: unknown}).service
-  if (!Array.isArray(services)) return undefined
-
-  const service = services.find(
-    item =>
-      item &&
-      typeof item === 'object' &&
-      (item as {type?: unknown}).type === 'AtprotoPersonalDataServer' &&
-      typeof (item as {serviceEndpoint?: unknown}).serviceEndpoint === 'string',
-  ) as {serviceEndpoint: string} | undefined
-
-  if (!service) return undefined
-
-  try {
-    const endpoint = new URL(service.serviceEndpoint)
-    if (endpoint.protocol !== 'https:') return undefined
-    return endpoint.origin
-  } catch {
-    return undefined
-  }
-}
-
-function isStoryRecord(value: unknown): value is app.momento.story.Main {
-  if (!value || typeof value !== 'object') return false
-  const record = value as Partial<app.momento.story.Main>
-  return (
-    record.$type === 'app.momento.story' &&
-    (record.mediaType === 'image' || record.mediaType === 'video') &&
-    typeof record.createdAt === 'string' &&
-    typeof record.expiresAt === 'string' &&
-    !!record.media
-  )
+type StoryEmbedView = {
+  $type?: string
+  images?: {fullsize?: string}[]
+  playlist?: string
+  thumbnail?: string
 }
 
 /**
- * Reads public stories from followed accounts' PDS repositories. AT Protocol
- * has no global AppView index for this custom collection, so each author's PDS
- * is resolved from their DID document and queried directly.
+ * Loads a user's recent public feed and selects only Momento-tagged media
+ * posts. The 24-hour expiry is derived from the standard createdAt timestamp,
+ * avoiding a custom lexicon or a Momento-specific backend.
  */
 export async function listStoriesForAuthors(
   appviewClient: Client,
@@ -137,50 +130,78 @@ export async function listStoriesForAuthors(
   const results = await Promise.all(
     uniqueDids.map(async authorDid => {
       try {
-        const identity = await appviewClient.call(
-          com.atproto.identity.resolveIdentity,
-          {identifier: authorDid},
+        const response = await appviewClient.call(
+          app.bsky.feed.getAuthorFeed,
+          {
+            actor: authorDid as AtIdentifierString,
+            filter: 'posts_no_replies',
+            limit: 100,
+          },
         )
-        const pdsEndpoint = getPdsEndpoint(identity.didDoc)
-        if (!pdsEndpoint) return []
 
-        const pdsClient = createServiceClient(pdsEndpoint)
-        const response = await pdsClient.call(com.atproto.repo.listRecords, {
-          repo: authorDid,
-          collection: 'app.momento.story',
-          limit: 100,
-          reverse: true,
-        })
-
-        return response.records.flatMap(record => {
-          if (!isStoryRecord(record.value)) return []
-          if (!isStoryActive(record.value, now)) return []
-          const media = record.value.media as unknown as {
-            ref?: {toString: () => string}
-            cid?: string
+        return response.feed.flatMap(item => {
+          const record = item.post.record as app.bsky.feed.post.Main
+          if (!record.tags?.includes(MOMENTO_STORY_TAG)) return []
+          if (
+            !isStoryActive(
+              {
+                createdAt: record.createdAt,
+                expiresAt: getStoryExpiresAt(record.createdAt),
+              },
+              now,
+            )
+          ) {
+            return []
           }
-          const cid = media.ref?.toString() ?? media.cid
-          if (!cid) return []
-          const mediaUrl = new URL('/xrpc/com.atproto.sync.getBlob', pdsEndpoint)
-          mediaUrl.searchParams.set('did', authorDid)
-          mediaUrl.searchParams.set('cid', cid)
-          return [{
-            uri: record.uri,
-            cid: record.cid,
-            authorDid,
-            record: record.value,
-            mediaUrl: mediaUrl.toString(),
-          }]
+
+          const embed = item.post.embed as StoryEmbedView | undefined
+          if (!embed) return []
+
+          if (
+            embed.$type === 'app.bsky.embed.images#view' &&
+            embed.images?.[0]?.fullsize
+          ) {
+            return [
+              {
+                uri: item.post.uri,
+                cid: item.post.cid,
+                authorDid,
+                record,
+                mediaType: 'image' as const,
+                mediaUrl: embed.images[0].fullsize,
+              },
+            ]
+          }
+
+          if (
+            embed.$type === 'app.bsky.embed.video#view' &&
+            embed.playlist
+          ) {
+            return [
+              {
+                uri: item.post.uri,
+                cid: item.post.cid,
+                authorDid,
+                record,
+                mediaType: 'video' as const,
+                mediaUrl: embed.playlist,
+              },
+            ]
+          }
+
+          return []
         })
       } catch {
-        // An unavailable or unsupported PDS must not prevent other authors'
-        // stories from loading.
+        // An unavailable account or AppView must not block other stories.
         return []
       }
     }),
   )
 
-  return results.flat().sort(
-    (a, b) => Date.parse(a.record.createdAt) - Date.parse(b.record.createdAt),
-  )
+  return results
+    .flat()
+    .sort(
+      (a, b) =>
+        Date.parse(a.record.createdAt) - Date.parse(b.record.createdAt),
+    )
 }
