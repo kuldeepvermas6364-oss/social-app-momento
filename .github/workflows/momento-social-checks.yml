@@ -13,6 +13,9 @@ on:
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
       - "tsconfig*.json"
+      - ".oxlintrc.json"
+      - "scripts/**"
+      - "src/locale/**"
       - ".github/workflows/momento-social-checks.yml"
 
 permissions:
