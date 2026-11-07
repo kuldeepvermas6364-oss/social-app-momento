@@ -267,7 +267,8 @@ function App() {
           </KeyboardControllerProvider>
         </A11yProvider>
       </AppConfigProvider>
-    </Geo.Provider>
+      </Geo.Provider>
+    </FirebaseAuthProvider>
   )
 }
 
