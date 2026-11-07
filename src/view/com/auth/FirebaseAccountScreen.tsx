@@ -52,7 +52,12 @@ export function FirebaseAccountScreen() {
         a.py_2xl,
         t.atoms.bg,
       ]}>
-      <View style={[a.w_full, a.gap_md, {maxWidth: 440, alignSelf: 'center'}]}>
+      <View
+        style={[
+          a.w_full,
+          a.gap_md,
+          {maxWidth: 440, alignSelf: 'center'},
+        ]}>
         <Text style={[a.text_3xl, a.font_bold, t.atoms.text]}>Momento</Text>
         <Text style={[a.text_xl, a.font_semi_bold, t.atoms.text]}>
           Your account
