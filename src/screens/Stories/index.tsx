@@ -20,7 +20,11 @@ import {useLingui} from '@lingui/react'
 
 import {IMAGE_SIZE_CONFIG_POSTS} from '#/lib/constants'
 import {createVideoTelemetry} from '#/lib/media/video/telemetry'
-import {getStoryMediaType, type StoryAsset, type StoryView} from '#/lib/stories/api'
+import {
+  getStoryMediaType,
+  type StoryAsset,
+  type StoryView,
+} from '#/lib/stories/api'
 import {compressImage, createComposerImage} from '#/state/gallery'
 import {useProfilesQuery} from '#/state/queries/profile'
 import {
@@ -144,9 +148,12 @@ export function StoriesScreen() {
     <Layout.Screen>
       <ScrollView contentContainerStyle={{padding: 16, gap: 16}}>
         <View style={{gap: 6}}>
-          <RNText style={{fontSize: 25, fontWeight: '700'}}>Momento Stories</RNText>
+          <RNText style={{fontSize: 25, fontWeight: '700'}}>
+            Momento Stories
+          </RNText>
           <RNText style={{fontSize: 13, color: '#777'}}>
-            Public stories from people you follow. Stories expire after 24 hours.
+            Public stories from people you follow. Stories expire after 24
+            hours.
           </RNText>
         </View>
 
@@ -193,7 +200,9 @@ export function StoriesScreen() {
             <Pressable
               accessibilityRole="button"
               onPress={() => void storiesQuery.refetch()}>
-              <RNText style={{color: '#6652d9', fontWeight: '600'}}>Try again</RNText>
+              <RNText style={{color: '#6652d9', fontWeight: '600'}}>
+                Try again
+              </RNText>
             </Pressable>
           </View>
         ) : stories.length === 0 ? (
@@ -202,7 +211,9 @@ export function StoriesScreen() {
           </RNText>
         ) : (
           <View style={{gap: 12}}>
-            <RNText style={{fontSize: 18, fontWeight: '700'}}>Recent stories</RNText>
+            <RNText style={{fontSize: 18, fontWeight: '700'}}>
+              Recent stories
+            </RNText>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View style={{flexDirection: 'row', gap: 12}}>
                 {stories.map(story => {
@@ -243,7 +254,11 @@ export function StoriesScreen() {
                             <Image
                               source={{uri: story.thumbnailUrl}}
                               contentFit="cover"
-                              style={{width: 124, height: 176, borderRadius: 14}}
+                              style={{
+                                width: 124,
+                                height: 176,
+                                borderRadius: 14,
+                              }}
                             />
                           ) : (
                             <RNText style={{color: 'white', fontSize: 16}}>
@@ -331,7 +346,11 @@ async function uploadStoryVideo(
   metric: MetricFn,
 ): Promise<BlobRef> {
   const controller = new AbortController()
-  const telemetry = createVideoTelemetry({asset, signal: controller.signal, metric})
+  const telemetry = createVideoTelemetry({
+    asset,
+    signal: controller.signal,
+    metric,
+  })
   telemetry.picked()
 
   return await new Promise((resolve, reject) => {
