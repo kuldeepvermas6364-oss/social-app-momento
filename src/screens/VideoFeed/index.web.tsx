@@ -2,6 +2,8 @@ import {createElement, useCallback, useEffect, useMemo, useRef, useState} from '
 import {FlatList, Pressable, View, useWindowDimensions} from 'react-native'
 import {useSafeAreaInsets} from 'react-native-safe-area-context'
 import {RichText as RichTextAPI} from '@bsky/sdk/richtext'
+import {type ModerationDecision} from '@bsky/sdk/moderation'
+import {Image} from 'expo-image'
 import {useIsFocused, useNavigation, useRoute, type RouteProp} from '@react-navigation/native'
 
 import {type CommonNavigatorParams, type NavigationProp} from '#/lib/routes/types'
@@ -26,6 +28,7 @@ import {app} from '#/lexicons'
 import * as bsky from '#/types/bsky'
 import {useAnalytics} from '#/analytics'
 import {Text} from '#/components/Typography'
+import * as Hider from '#/components/moderation/Hider'
 import {PostControls} from '#/components/PostControls'
 import {Provider as ActiveVideoWebProvider, useActiveVideoWeb} from '#/components/Post/Embed/VideoEmbed/ActiveVideoWebContext'
 import {VideoEmbedInnerWeb} from '#/components/Post/Embed/VideoEmbed/VideoEmbedInner/VideoEmbedInnerWeb'
@@ -42,6 +45,7 @@ type VideoPost = {
   embed: app.bsky.embed.video.View
   feedContext: string | undefined
   reqId: string | undefined
+  moderation: ModerationDecision
 }
 
 export function VideoFeed() {
@@ -89,6 +93,7 @@ export function VideoFeed() {
             embed,
             feedContext: slice.feedContext,
             reqId: slice.reqId,
+            moderation: item.moderation,
           })
         }
       }
@@ -321,6 +326,15 @@ function VideoCard({
   ])
 
   const isFollowing = Boolean(profile.viewer?.following)
+  const mergedModui = useMemo(() => {
+    const modui = item.moderation.ui('contentView')
+    const mediaModui = item.moderation.ui('contentMedia')
+    modui.alerts = [...modui.alerts, ...mediaModui.alerts]
+    modui.blurs = [...modui.blurs, ...mediaModui.blurs]
+    modui.filters = [...modui.filters, ...mediaModui.filters]
+    modui.informs = [...modui.informs, ...mediaModui.informs]
+    return modui
+  }, [item.moderation])
   const isOwnProfile = currentAccount?.did === item.post.author.did
 
   return (
@@ -330,75 +344,116 @@ function VideoCard({
         'aria-hidden': true,
         style: {position: 'absolute', inset: 0, pointerEvents: 'none'},
       })}
-      <ErrorBoundary
-        renderError={() => <StatusMessage message="This video could not be played. Please try again later." />}>
-        <ReportDialogMetadataContext.Provider>
-          <VideoEmbedInnerWeb
-            embed={item.embed}
-            active={active}
-            setActive={setActive}
-            onScreen={onScreen && routeFocused}
-            lastKnownTime={lastKnownTime}
-            onPlaybackStart={autoplay => {
-              if (playbackStartTracked.current) return
-              playbackStartTracked.current = true
-              ax.metric('video:playback:start', {
-                postUri: item.post.uri,
-                postAuthorDid: item.post.author.did,
-                context: 'immersiveFeed',
-                presentation,
-                autoplay,
-              })
-            }}
-            onPlaybackProgress={time => {
-              lastKnownTime.current = time
-              durationTracker.observeProgress(time)
-            }}
-            onPlaybackStateChange={state => {
-              durationTracker.setPlaying(state === 'playing')
-              durationTracker.setBuffering(state === 'buffering')
-              if (state === 'playing') telemetryRef.current?.playing()
-            }}
-            onPlaybackEnd={() => durationTracker.flush('ended')}
-          />
-        </ReportDialogMetadataContext.Provider>
-      </ErrorBoundary>
+      <Hider.Outer modui={mergedModui}>
+        <Hider.Mask>
+          <VideoModerationOverlay embed={item.embed} onPressShow={setActive} />
+        </Hider.Mask>
+        <Hider.Content>
+          <ErrorBoundary
+            renderError={() => <StatusMessage message="This video could not be played. Please try again later." />}>
+            <ReportDialogMetadataContext.Provider>
+              <VideoEmbedInnerWeb
+                embed={item.embed}
+                active={active}
+                setActive={setActive}
+                onScreen={onScreen && routeFocused}
+                lastKnownTime={lastKnownTime}
+                onPlaybackStart={autoplay => {
+                  if (playbackStartTracked.current) return
+                  playbackStartTracked.current = true
+                  ax.metric('video:playback:start', {
+                    postUri: item.post.uri,
+                    postAuthorDid: item.post.author.did,
+                    context: 'immersiveFeed',
+                    presentation,
+                    autoplay,
+                  })
+                }}
+                onPlaybackProgress={time => {
+                  lastKnownTime.current = time
+                  durationTracker.observeProgress(time)
+                }}
+                onPlaybackStateChange={state => {
+                  durationTracker.setPlaying(state === 'playing')
+                  durationTracker.setBuffering(state === 'buffering')
+                  if (state === 'playing') telemetryRef.current?.playing()
+                }}
+                onPlaybackEnd={() => durationTracker.flush('ended')}
+              />
+            </ReportDialogMetadataContext.Provider>
+          </ErrorBoundary>
 
-      <View pointerEvents="box-none" style={{position: 'absolute', left: 16, right: 16, bottom: 28, gap: 10}}>
-        <Pressable onPress={onOpenAuthor} accessibilityRole="button">
-          <Text style={{color: 'white', fontWeight: '700', fontSize: 16}}>
-            {item.post.author.displayName || item.post.author.handle}
-          </Text>
-          <Text style={{color: 'white', opacity: 0.85}}>@{item.post.author.handle}</Text>
-        </Pressable>
+          <View pointerEvents="box-none" style={{position: 'absolute', left: 16, right: 16, bottom: 28, gap: 10}}>
+            <Pressable onPress={onOpenAuthor} accessibilityRole="button">
+              <Text style={{color: 'white', fontWeight: '700', fontSize: 16}}>
+                {item.post.author.displayName || item.post.author.handle}
+              </Text>
+              <Text style={{color: 'white', opacity: 0.85}}>@{item.post.author.handle}</Text>
+            </Pressable>
 
-        {record?.text?.trim() ? <Text style={{color: 'white'}}>{record.text}</Text> : null}
+            {record?.text?.trim() ? <Text style={{color: 'white'}}>{record.text}</Text> : null}
 
-        {!isOwnProfile ? (
-          <Pressable
-            onPress={() => requireAuth(() => isFollowing ? void queueUnfollow() : void queueFollow())}
-            accessibilityRole="button"
-            accessibilityLabel={isFollowing ? 'Unfollow creator' : 'Follow creator'}
-            style={{alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 12, backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 18}}>
-            <Text style={{color: 'white'}}>{isFollowing ? 'Following' : 'Follow'}</Text>
-          </Pressable>
-        ) : null}
+            {!isOwnProfile ? (
+              <Pressable
+                onPress={() => requireAuth(() => isFollowing ? void queueUnfollow() : void queueFollow())}
+                accessibilityRole="button"
+                accessibilityLabel={isFollowing ? 'Unfollow creator' : 'Follow creator'}
+                style={{alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 12, backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 18}}>
+                <Text style={{color: 'white'}}>{isFollowing ? 'Following' : 'Follow'}</Text>
+              </Pressable>
+            ) : null}
 
-        {post !== POST_TOMBSTONE && record ? (
-          <PostControls
-            richText={richText}
-            post={post}
-            record={record}
-            feedContext={item.feedContext}
-            reqId={item.reqId}
-            logContext="ImmersiveVideo"
-            onPressReply={onOpenPost}
-            big
-          />
-        ) : post === POST_TOMBSTONE ? (
-          <Text style={{color: 'white'}}>This post has been deleted.</Text>
-        ) : null}
-      </View>
+            {post !== POST_TOMBSTONE && record ? (
+              <PostControls
+                richText={richText}
+                post={post}
+                record={record}
+                feedContext={item.feedContext}
+                reqId={item.reqId}
+                logContext="ImmersiveVideo"
+                onPressReply={onOpenPost}
+                big
+              />
+            ) : post === POST_TOMBSTONE ? (
+              <Text style={{color: 'white'}}>This post has been deleted.</Text>
+            ) : null}
+          </View>
+        </Hider.Content>
+      </Hider.Outer>
+    </View>
+  )
+}
+
+
+function VideoModerationOverlay({
+  embed,
+  onPressShow,
+}: {
+  embed: app.bsky.embed.video.View
+  onPressShow: () => void
+}) {
+  const hider = Hider.useHider()
+
+  return (
+    <View style={{flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.85)', padding: 24, gap: 12}}>
+      {embed.thumbnail ? (
+        <Image
+          source={{uri: embed.thumbnail}}
+          blurRadius={80}
+          style={{position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.25}}
+          accessibilityIgnoresInvertColors
+        />
+      ) : null}
+      <Text style={{color: 'white', textAlign: 'center'}}>Hidden by your moderation settings.</Text>
+      <Pressable
+        onPress={() => {
+          hider.setIsContentVisible(true)
+          onPressShow()
+        }}
+        accessibilityRole="button"
+        style={{paddingVertical: 10, paddingHorizontal: 18, borderRadius: 20, backgroundColor: 'white'}}>
+        <Text style={{color: 'black', fontWeight: '600'}}>Show anyway</Text>
+      </Pressable>
     </View>
   )
 }
