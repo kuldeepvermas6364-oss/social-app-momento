@@ -44,6 +44,7 @@ export function FirebaseAuthGate({onDismiss}: {onDismiss?: () => void}) {
   const t = useTheme()
   const {
     currentUser,
+    currentProfile,
     isReady,
     signIn,
     createAccount,
@@ -193,6 +194,11 @@ export function FirebaseAuthGate({onDismiss}: {onDismiss?: () => void}) {
               <Text style={[a.text_md, t.atoms.text_contrast_medium]}>
                 {currentUser.displayName || currentUser.email}
               </Text>
+              {currentProfile?.username ? (
+                <Text style={[a.text_sm, t.atoms.text_contrast_medium]}>
+                  @{currentProfile.username}
+                </Text>
+              ) : null}
               <Text style={[a.text_sm, t.atoms.text_contrast_medium]}>
                 Firebase Authentication is active for this account. Social
                 features are being migrated to the Momento Firebase backend in
