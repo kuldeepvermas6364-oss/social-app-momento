@@ -35,6 +35,7 @@ function authError(message: string): Error {
     OPERATION_NOT_ALLOWED:
       'Email and password sign-in is not enabled for this Firebase project.',
     TOKEN_EXPIRED: 'Your sign-in session expired. Please sign in again.',
+    INVALID_ID_TOKEN: 'Your sign-in session expired. Please sign in again.',
     INVALID_REFRESH_TOKEN: 'Your sign-in session expired. Please sign in again.',
   }
 
