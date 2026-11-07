@@ -55,20 +55,19 @@ export function FirebaseAuthGate({onDismiss}: {onDismiss?: () => void}) {
   const [notice, setNotice] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
 
-  const inputStyle = useMemo(
-    () => ({
+  const inputStyle = [
+    a.px_md,
+    a.py_md,
+    a.rounded_sm,
+    a.text_md,
+    t.atoms.text,
+    t.atoms.bg_contrast_50,
+    {
       borderWidth: 1,
-      borderColor: t.palette.contrast_200,
-      borderRadius: 12,
-      paddingHorizontal: 14,
-      paddingVertical: 12,
-      color: t.palette.contrast_900,
-      backgroundColor: t.palette.contrast_25,
-      fontSize: 16,
+      borderColor: t.palette.contrast_100,
       marginBottom: 12,
-    }),
-    [t],
-  )
+    },
+  ]
 
   const buttonStyle = {
     borderRadius: 12,
