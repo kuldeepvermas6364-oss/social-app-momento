@@ -11,7 +11,7 @@ const author = {
   handle: 'alice.test',
 } satisfies app.bsky.actor.defs.ProfileViewBasic
 
-function post(id: string) {
+function post(id: string): app.bsky.feed.defs.PostView {
   return {
     $type: 'app.bsky.feed.defs#postView',
     uri: `at://did:plc:alice/app.bsky.feed.post/${id}`,
@@ -23,7 +23,7 @@ function post(id: string) {
       createdAt: '2026-08-31T00:00:00.000Z',
     },
     indexedAt: '2026-08-31T00:00:00.000Z',
-  } satisfies app.bsky.feed.defs.PostView
+  }
 }
 
 describe('createFeedViewPostsSlices', () => {
