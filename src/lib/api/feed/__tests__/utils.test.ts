@@ -1,9 +1,11 @@
 import {Platform} from 'react-native'
 import {afterEach, beforeEach, describe, expect, it, jest} from '@jest/globals'
 
-import {BSKY_FEED_OWNER_DIDS, DISCOVER_FEED_URI} from '#/lib/constants'
+import {BSKY_APP_ACCOUNT_DID, BSKY_FEED_OWNER_DIDS} from '#/lib/constants'
 import {type UsePreferencesQueryResponse} from '#/state/queries/preferences'
 import {device} from '#/storage'
+
+const BLUESKY_OWNED_FEED_URI = `at://${BSKY_APP_ACCOUNT_DID}/app.bsky.feed.generator/test`
 
 jest.mock('#/env', () => ({IS_WEB: false}))
 jest.mock('#/storage', () => ({device: {get: jest.fn()}}))
@@ -27,7 +29,7 @@ describe('createBskyFeedHeaders', () => {
     'sends the %s platform even without geolocation data',
     platform => {
       jest.replaceProperty(Platform, 'OS', platform)
-      expect(createBskyFeedHeaders(DISCOVER_FEED_URI)).toEqual({
+      expect(createBskyFeedHeaders(BLUESKY_OWNED_FEED_URI)).toEqual({
         'x-atproto-bsky-platform': platform,
       })
     },
@@ -69,18 +71,18 @@ describe('createBskyFeedHeaders', () => {
   it('omits missing values and reads updated service data on each request', () => {
     const get = jest.mocked(device.get)
     get.mockReturnValueOnce(undefined)
-    expect(createBskyFeedHeaders(DISCOVER_FEED_URI)).toEqual({
+    expect(createBskyFeedHeaders(BLUESKY_OWNED_FEED_URI)).toEqual({
       'x-atproto-bsky-platform': 'ios',
     })
 
     get.mockReturnValueOnce({countryCode: 'US', regionCode: undefined})
-    expect(createBskyFeedHeaders(DISCOVER_FEED_URI)).toEqual({
+    expect(createBskyFeedHeaders(BLUESKY_OWNED_FEED_URI)).toEqual({
       'x-atproto-bsky-platform': 'ios',
       'x-atproto-bsky-geo-country': 'US',
     })
 
     get.mockReturnValueOnce({countryCode: '', regionCode: '', city: '', ip: ''})
-    expect(createBskyFeedHeaders(DISCOVER_FEED_URI)).toEqual({
+    expect(createBskyFeedHeaders(BLUESKY_OWNED_FEED_URI)).toEqual({
       'x-atproto-bsky-platform': 'ios',
     })
   })
