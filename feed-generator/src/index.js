@@ -1,3 +1,4 @@
+/*
  * This service ranks public candidate posts from the Bluesky AppView.
  * It deliberately excludes Momento Story records from the public For You feed.
  */
