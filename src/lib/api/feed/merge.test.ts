@@ -4,7 +4,6 @@ import {type Client} from '@atproto/lex'
 import {DISCOVER_FEED_URI} from '#/lib/constants'
 import {getContentLanguages} from '#/state/preferences/languages'
 import {app} from '#/lexicons'
-import {app} from '#/lexicons'
 import {device} from '#/storage'
 import {MergeFeedAPI} from './merge'
 
