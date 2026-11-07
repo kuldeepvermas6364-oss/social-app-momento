@@ -39,7 +39,6 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-          cache: gradle
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -92,10 +91,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" "${{ steps.package.outputs.path }}" \
-            --title "Momento $GITHUB_REF_NAME (debug APK)" \
-            --notes "Installable Momento test build. This debug-signed APK is for device testing and is not a Google Play production release." \
-            --verify-tag
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "${{ steps.package.outputs.path }}" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "${{ steps.package.outputs.path }}" \
+              --title "Momento $GITHUB_REF_NAME (debug APK)" \
+              --notes "Installable Momento test build. This debug-signed APK is for device testing and is not a Google Play production release." \
+              --verify-tag
+          fi
 
       - name: Write build summary
         run: |
