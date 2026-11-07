@@ -88,6 +88,7 @@ import {
 import {TrendingTopicsWidgetSync} from '#/features/trendingWidget/Sync'
 import * as Geo from '#/geolocation'
 import {Splash} from '#/Splash'
+import {FirebaseAuthProvider} from '#/lib/firebase/session'
 
 void identifyDevice(getDeviceId(), setupDeviceId)
 
@@ -232,7 +233,8 @@ function App() {
    * that is set up in the InnerApp component above.
    */
   return (
-    <Geo.Provider>
+    <FirebaseAuthProvider>
+      <Geo.Provider>
       <AppConfigProvider>
         <A11yProvider>
           <KeyboardControllerProvider preload={false}>
