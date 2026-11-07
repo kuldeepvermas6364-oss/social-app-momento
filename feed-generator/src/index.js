@@ -181,4 +181,3 @@ export default {
     }
   },
 }
- PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
