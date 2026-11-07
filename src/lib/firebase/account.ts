@@ -1,7 +1,7 @@
 import {
+  type FirebaseAuthUser,
   createFirebaseAccount,
   deleteFirebaseAccount,
-  type FirebaseAuthUser,
 } from './auth'
 import {
   claimFirebaseUsername,
