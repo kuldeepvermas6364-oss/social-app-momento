@@ -137,7 +137,10 @@ function NativeStackNavigator({
   if (showLoggedOut && !firebaseUser) {
     return <LoggedOut onDismiss={() => setShowLoggedOut(false)} />
   }
-  if (onboardingState.isActive) {
+  // This onboarding flow is tied to the legacy AT Protocol account model.
+  // Firebase-only Momento users should not be sent into it before the
+  // Firebase-backed profile onboarding is implemented.
+  if (hasSession && onboardingState.isActive) {
     return <Onboarding />
   }
   // On web, limit how many screens stay mounted to prevent memory growth.

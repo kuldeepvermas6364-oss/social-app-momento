@@ -8,10 +8,10 @@
         ".write": "auth != null && auth.uid === $uid",
         ".validate": "newData.hasChildren(['uid', 'username', 'displayName', 'bio', 'createdAt', 'updatedAt'])",
         "uid": {
-          ".validate": "newData.isString() && newData.val() === $uid"
+          ".validate": "newData.isString() && newData.val() === $uid && (!data.exists() || newData.val() === data.val())"
         },
         "username": {
-          ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9_]{3,20}$/)"
+          ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9_]{3,20}$/) && (!data.exists() || newData.val() === data.val())"
         },
         "displayName": {
           ".validate": "newData.isString() && newData.val().length <= 50"
@@ -23,7 +23,7 @@
           ".validate": "!newData.exists() || newData.val() === null || (newData.isString() && newData.val().length <= 2048)"
         },
         "createdAt": {
-          ".validate": "newData.isNumber()"
+          ".validate": "newData.isNumber() && (!data.exists() || newData.val() === data.val())"
         },
         "updatedAt": {
           ".validate": "newData.isNumber()"
@@ -41,11 +41,12 @@
           ".validate": "newData.isString() && newData.val().length <= 254"
         },
         "createdAt": {
-          ".validate": "newData.isNumber()"
+          ".validate": "newData.isNumber() && (!data.exists() || newData.val() === data.val())"
         },
         "$other": {
           ".validate": false
-        }
+        },
+        ".validate": "newData.hasChildren(['email', 'createdAt'])"
       }
     },
     "usernames": {

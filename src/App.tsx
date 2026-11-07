@@ -15,6 +15,7 @@ import {BackgroundNotificationPreferencesProvider} from '@bsky.app/expo-backgrou
 import {useLingui} from '@lingui/react/macro'
 
 import {FirebaseAuthProvider, useFirebaseAuth} from '#/lib/firebase/session'
+import {getAccountCacheScope} from '#/lib/firebase/cache-scope'
 import {Provider as HideBottomBarBorderProvider} from '#/lib/hooks/useHideBottomBarBorder'
 import {QueryProvider} from '#/lib/react-query'
 import {ThemeProvider} from '#/lib/ThemeContext'
@@ -106,7 +107,10 @@ void prefetchAppConfig()
 function InnerApp() {
   const [isReady, setIsReady] = useState(false)
   const {currentAccount} = useSession()
-  const {isReady: isFirebaseReady} = useFirebaseAuth()
+  const {currentUser, isReady: isFirebaseReady} = useFirebaseAuth()
+  // Firebase UIDs and legacy AT Protocol DIDs are separate identity domains.
+  // Give each signed-in Firebase account its own persistent query-cache namespace.
+  const cacheScope = getAccountCacheScope(currentUser?.localId, currentAccount?.did)
   const theme = useColorModeTheme()
   const {t: l} = useLingui()
   const hasCheckedLanding = useLandingEntry()
@@ -143,9 +147,9 @@ function InnerApp() {
               <GestureHandlerRootView style={a.h_full}>
                 <Fragment
                   // Resets the entire tree below when it changes:
-                  key={currentAccount?.did}>
+                  key={cacheScope}>
                   <AnalyticsFeaturesContext>
-                    <QueryProvider currentDid={currentAccount?.did}>
+                    <QueryProvider currentDid={currentAccount?.did} cacheScope={cacheScope}>
                       <BetaUserStorageSync />
                       <PolicyUpdateOverlayProvider>
                         <LiveEventsProvider>

@@ -154,16 +154,23 @@ const dehydrateOptions: DehydrateOptions = {
 export function QueryProvider({
   children,
   currentDid,
+  cacheScope,
 }: {
   children: React.ReactNode
   currentDid: string | undefined
+  /**
+   * Persistent cache identity. Firebase accounts use their Firebase UID here;
+   * legacy AT Protocol sessions continue to use their DID.
+   */
+  cacheScope?: string
 }) {
+  const identityScope = cacheScope ?? currentDid ?? 'logged-out'
   return (
     <QueryProviderInner
-      // Enforce we never reuse cache between users.
-      // These two props MUST stay in sync.
-      key={currentDid}
-      currentDid={currentDid}>
+      // The in-memory client and persisted cache must be isolated per identity.
+      key={identityScope}
+      currentDid={currentDid}
+      cacheScope={identityScope}>
       {children}
     </QueryProviderInner>
   )
@@ -172,24 +179,29 @@ export function QueryProvider({
 function QueryProviderInner({
   children,
   currentDid,
+  cacheScope,
 }: {
   children: React.ReactNode
   currentDid: string | undefined
+  cacheScope: string
 }) {
-  const [initialDid] = useState(currentDid)
-  if (currentDid !== initialDid) {
+  const [initialIdentity] = useState({currentDid, cacheScope})
+  if (
+    currentDid !== initialIdentity.currentDid ||
+    cacheScope !== initialIdentity.cacheScope
+  ) {
     throw Error(
-      'Something is very wrong. Expected did to be stable due to key above.',
+      'Something is very wrong. Expected the query identity to be stable due to the key above.',
     )
   }
-  // We create the query client here so that it's scoped to a specific DID.
+  // Keep a separate query client and persisted store for each active identity.
   // Do not move the query client creation outside of this component.
   const [queryClient, _setQueryClient] = useState(() => createQueryClient())
   const [persistOptions, _setPersistOptions] = useState(() => {
-    const storage = createPersistedQueryStorage(currentDid ?? 'logged-out')
+    const storage = createPersistedQueryStorage(cacheScope)
     const asyncPersister = createAsyncStoragePersister({
       storage,
-      key: 'queryClient-' + (currentDid ?? 'logged-out'),
+      key: 'queryClient-' + cacheScope,
       // JSON, as by default, but with Following v2's Home Following snapshot.
       serialize: client => JSON.stringify(saveFollowingSnapshot(client)),
       deserialize: cached => loadFollowingSnapshot(JSON.parse(cached)),

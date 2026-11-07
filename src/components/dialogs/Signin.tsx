@@ -44,7 +44,7 @@ function SigninDialogInner({}: {control: Dialog.DialogOuterProps['control']}) {
 
   return (
     <Dialog.ScrollableInner
-      label={_(msg`Sign in to Bluesky or create a new account`)}
+      label={_(msg`Sign in to Momento or create a new account`)}
       style={[a.w_full, gtMobile && web({width: 'auto', maxWidth: 420})]}>
       <View style={[!IS_NATIVE && a.p_2xl]}>
         <View
@@ -74,7 +74,7 @@ function SigninDialogInner({}: {control: Dialog.DialogOuterProps['control']}) {
             },
           ]}>
           <Trans>
-            Sign in or create your account to join the conversation!
+            Sign in or create your Momento account to join the conversation!
           </Trans>
         </Text>
 
