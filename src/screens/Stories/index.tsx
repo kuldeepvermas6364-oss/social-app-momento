@@ -1,5 +1,4 @@
 import {useEffect, useMemo, useState} from 'react'
-import {type BlobRef} from '@atproto/lex'
 import {
   ActivityIndicator,
   Alert,
@@ -10,17 +9,23 @@ import {
   TextInput,
   View,
 } from 'react-native'
+import {type BlobRef, type Client} from '@atproto/lex'
 import {type AtIdentifierString} from '@atproto/syntax'
+import {type I18n} from '@lingui/core'
 import {Image} from 'expo-image'
+import {
+  type ImagePickerAsset,
+  launchImageLibraryAsync,
+} from 'expo-image-picker'
 import {createVideoPlayer, VideoView} from 'expo-video'
-import {type ImagePickerAsset, launchImageLibraryAsync} from 'expo-image-picker'
 
+import {type Metrics} from '#/analytics/metrics'
+import {useAnalytics} from '#/analytics'
 import * as Layout from '#/components/Layout'
 import {IMAGE_SIZE_CONFIG_POSTS} from '#/lib/constants'
-import {getStoryMediaType, type StoryView} from '#/lib/stories/api'
-import {compressImage, createComposerImage} from '#/state/gallery'
 import {createVideoTelemetry} from '#/lib/media/video/telemetry'
-import {processVideo} from '#/view/com/composer/state/video'
+import {getStoryMediaType, type StoryAsset, type StoryView} from '#/lib/stories/api'
+import {compressImage, createComposerImage} from '#/state/gallery'
 import {useProfilesQuery} from '#/state/queries/profile'
 import {
   useCreateStoryMutation,
@@ -28,10 +33,11 @@ import {
   useStoriesQuery,
 } from '#/state/queries/stories'
 import {usePdsClient, useSession} from '#/state/session'
-import {useAnalytics} from '#/analytics'
-import {useLingui} from '@lingui/react'
+import {processVideo} from '#/view/com/composer/state/video'
 
 const MAX_VIDEO_BYTES = 100_000_000
+
+type MetricFn = <E extends keyof Metrics>(event: E, payload: Metrics[E]) => void
 
 export function StoriesScreen() {
   const {currentAccount} = useSession()
@@ -42,6 +48,7 @@ export function StoriesScreen() {
   const createMutation = useCreateStoryMutation()
   const deleteMutation = useDeleteStoryMutation()
   const [caption, setCaption] = useState('')
+  const [isPreparing, setIsPreparing] = useState(false)
   const [selectedStory, setSelectedStory] = useState<StoryView | undefined>()
 
   const stories = storiesQuery.data ?? []
@@ -60,6 +67,7 @@ export function StoriesScreen() {
   )
 
   const onAddStory = async () => {
+    setIsPreparing(true)
     try {
       const result = await launchImageLibraryAsync({
         mediaTypes: ['images', 'videos'],
@@ -75,11 +83,15 @@ export function StoriesScreen() {
         asset.mimeType ??
         (asset.uri.toLowerCase().endsWith('.mp4') ? 'video/mp4' : 'image/jpeg')
       const mediaType = getStoryMediaType(mime)
-      if (asset.fileSize && mediaType === 'video' && asset.fileSize > MAX_VIDEO_BYTES) {
+      if (
+        asset.fileSize &&
+        mediaType === 'video' &&
+        asset.fileSize > MAX_VIDEO_BYTES
+      ) {
         throw new Error('Videos must be 100 MB or smaller.')
       }
 
-      let storyAsset = {path: asset.uri, mime}
+      let storyAsset: StoryAsset = {path: asset.uri, mime}
       if (mediaType === 'image') {
         const image = await createComposerImage({
           path: asset.uri,
@@ -115,6 +127,8 @@ export function StoriesScreen() {
         'Could not post story',
         error instanceof Error ? error.message : 'Please try again.',
       )
+    } finally {
+      setIsPreparing(false)
     }
   }
 
@@ -156,17 +170,21 @@ export function StoriesScreen() {
 
         <Pressable
           accessibilityRole="button"
-          disabled={createMutation.isPending}
+          disabled={isPreparing || createMutation.isPending}
           onPress={onAddStory}
           style={{
             backgroundColor: '#6652d9',
             borderRadius: 12,
             padding: 14,
             alignItems: 'center',
-            opacity: createMutation.isPending ? 0.6 : 1,
+            opacity: isPreparing || createMutation.isPending ? 0.6 : 1,
           }}>
           <RNText style={{color: 'white', fontWeight: '700'}}>
-            {createMutation.isPending ? 'Uploading story…' : '+ Add a story'}
+            {isPreparing
+              ? 'Preparing story…'
+              : createMutation.isPending
+                ? 'Publishing story…'
+                : '+ Add a story'}
           </RNText>
         </Pressable>
 
@@ -177,8 +195,7 @@ export function StoriesScreen() {
             <RNText>Stories could not be loaded.</RNText>
             <Pressable
               accessibilityRole="button"
-              onPress={() => void storiesQuery.refetch()}
-            >
+              onPress={() => void storiesQuery.refetch()}>
               <RNText style={{color: '#6652d9', fontWeight: '600'}}>Try again</RNText>
             </Pressable>
           </View>
@@ -225,7 +242,17 @@ export function StoriesScreen() {
                             alignItems: 'center',
                             justifyContent: 'center',
                           }}>
-                          <RNText style={{color: 'white', fontSize: 16}}>▶ VIDEO</RNText>
+                          {story.thumbnailUrl ? (
+                            <Image
+                              source={{uri: story.thumbnailUrl}}
+                              contentFit="cover"
+                              style={{width: 124, height: 176, borderRadius: 14}}
+                            />
+                          ) : (
+                            <RNText style={{color: 'white', fontSize: 16}}>
+                              ▶ VIDEO
+                            </RNText>
+                          )}
                         </View>
                       )}
                       <RNText numberOfLines={1} style={{fontWeight: '600'}}>
@@ -278,8 +305,7 @@ export function StoriesScreen() {
               }}>
               <Pressable
                 accessibilityRole="button"
-                onPress={() => setSelectedStory(undefined)}
-              >
+                onPress={() => setSelectedStory(undefined)}>
                 <RNText style={{color: 'white', fontSize: 18}}>Close ✕</RNText>
               </Pressable>
               {selectedStory.authorDid === currentAccount?.did ? (
@@ -318,13 +344,12 @@ function StoryVideo({story}: {story: StoryView}) {
   )
 }
 
-
 async function uploadStoryVideo(
   asset: ImagePickerAsset,
-  pdsClient: ReturnType<typeof usePdsClient>,
+  pdsClient: Client,
   dispatchUrl: string,
-  i18n: ReturnType<typeof useLingui>['i18n'],
-  metric: Parameters<typeof createVideoTelemetry>[0]['metric'],
+  i18n: I18n,
+  metric: MetricFn,
 ): Promise<BlobRef> {
   const controller = new AbortController()
   const telemetry = createVideoTelemetry({asset, signal: controller.signal, metric})
