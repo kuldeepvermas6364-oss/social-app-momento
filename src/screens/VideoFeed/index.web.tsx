@@ -1,18 +1,18 @@
 import {createElement, useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {FlatList, Pressable, View, useWindowDimensions} from 'react-native'
 import {useSafeAreaInsets} from 'react-native-safe-area-context'
-import {RichText as RichTextAPI} from '@bsky/sdk/richtext'
-import {type ModerationDecision} from '@bsky/sdk/moderation'
 import {Image} from 'expo-image'
+import {type ModerationDecision} from '@bsky/sdk/moderation'
+import {RichText as RichTextAPI} from '@bsky/sdk/richtext'
 import {useIsFocused, useNavigation, useRoute, type RouteProp} from '@react-navigation/native'
 
-import {type CommonNavigatorParams, type NavigationProp} from '#/lib/routes/types'
 import {getCurrentState, useOnAppStateChange} from '#/lib/appState'
 import {createPlaybackDurationTracker} from '#/lib/media/video/analytics'
 import {
   createPlaybackTelemetry,
   type PlaybackTelemetry,
 } from '#/lib/media/video/playbackTelemetry'
+import {type CommonNavigatorParams, type NavigationProp} from '#/lib/routes/types'
 import {POST_TOMBSTONE, usePostShadow} from '#/state/cache/post-shadow'
 import {useProfileShadow} from '#/state/cache/profile-shadow'
 import {
@@ -24,20 +24,19 @@ import {useFeedInfo} from '#/state/queries/feed'
 import {usePostFeedQuery} from '#/state/queries/post-feed'
 import {useProfileFollowMutationQueue} from '#/state/queries/profile'
 import {useRequireAuth, useSession} from '#/state/session'
+import {ErrorBoundary} from '#/view/com/util/ErrorBoundary'
+import {Header} from '#/screens/VideoFeed/components/Header'
+import {ThemeProvider} from '#/alf'
+import * as Layout from '#/components/Layout'
+import * as Hider from '#/components/moderation/Hider'
+import * as ReportDialogMetadataContext from '#/components/moderation/ReportDialog/ReportDialogMetadataContext'
+import {VideoEmbedInnerWeb} from '#/components/Post/Embed/VideoFeed/VideoEmbedInnerWeb'
+import {PostControls} from '#/components/PostControls'
+import {Text} from '#/components/Typography'
+import {useAnalytics} from '#/analytics'
 import {app} from '#/lexicons'
 import * as bsky from '#/types/bsky'
-import {useAnalytics} from '#/analytics'
-import {Text} from '#/components/Typography'
-import * as Hider from '#/components/moderation/Hider'
-import {PostControls} from '#/components/PostControls'
-import {Provider as ActiveVideoWebProvider, useActiveVideoWeb} from '#/components/Post/Embed/VideoEmbed/ActiveVideoWebContext'
-import {VideoEmbedInnerWeb} from '#/components/Post/Embed/VideoEmbed/VideoEmbedInner/VideoEmbedInnerWeb'
-import * as ReportDialogMetadataContext from '#/components/moderation/ReportDialog/ReportDialogMetadataContext'
-import {ErrorBoundary} from '#/view/com/util/ErrorBoundary'
 import {usePostFeedQuery as useFollowingV2PostFeedQuery} from '#/features/followingV2/home/queries/postFeed'
-import {Header} from '#/screens/VideoFeed/components/Header'
-import * as Layout from '#/components/Layout'
-import {ThemeProvider} from '#/alf'
 
 type VideoPost = {
   key: string
@@ -339,7 +338,7 @@ function VideoCard({
 
   return (
     <View style={{height, width: '100%', backgroundColor: '#08080b', overflow: 'hidden'}}>
-      {createElement('div' as any, {
+      {createElement('div', {
         ref: cardRef,
         'aria-hidden': true,
         style: {position: 'absolute', inset: 0, pointerEvents: 'none'},
