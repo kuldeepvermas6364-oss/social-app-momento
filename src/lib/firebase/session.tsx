@@ -72,30 +72,56 @@ export function FirebaseAuthProvider({children}: React.PropsWithChildren<{}>) {
     useState<FirebaseUserProfile | null>(null)
   const [isReady, setIsReady] = useState(false)
   const sessionRef = useRef<ActiveFirebaseSession | null>(null)
+  const sessionGenerationRef = useRef(0)
 
-  const applySession = useCallback(async (user: FirebaseAuthUser) => {
-    const nextSession = createActiveSession(user)
-    sessionRef.current = nextSession
-    setSession(nextSession)
-    try {
-      const profile = await getFirebaseUserProfile(user.localId, user.idToken)
-      setCurrentProfile(profile)
-    } catch {
-      // Keep authentication available if the optional public profile is unavailable.
-      setCurrentProfile(null)
+  const persistLatestSession = useCallback(async () => {
+    const latest = sessionRef.current
+    if (latest) {
+      await AsyncStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(toStoredSession(latest.user)),
+      )
+    } else {
+      await AsyncStorage.removeItem(STORAGE_KEY)
     }
-    await AsyncStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(toStoredSession(user)),
-    )
   }, [])
 
+  const applySession = useCallback(
+    async (user: FirebaseAuthUser) => {
+      const generation = ++sessionGenerationRef.current
+      const nextSession = createActiveSession(user)
+      sessionRef.current = nextSession
+      setSession(nextSession)
+      try {
+        const profile = await getFirebaseUserProfile(user.localId, user.idToken)
+        if (generation !== sessionGenerationRef.current) return
+        setCurrentProfile(profile)
+      } catch {
+        // Keep authentication available if the optional public profile is unavailable.
+        if (generation !== sessionGenerationRef.current) return
+        setCurrentProfile(null)
+      }
+      await AsyncStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(toStoredSession(user)),
+      )
+      if (generation !== sessionGenerationRef.current) {
+        await persistLatestSession()
+      }
+    },
+    [persistLatestSession],
+  )
+
   const clearSession = useCallback(async () => {
+    const generation = ++sessionGenerationRef.current
     sessionRef.current = null
     setSession(null)
     setCurrentProfile(null)
     await AsyncStorage.removeItem(STORAGE_KEY)
-  }, [])
+    if (generation !== sessionGenerationRef.current) {
+      await persistLatestSession()
+    }
+  }, [persistLatestSession])
 
   const signIn = useCallback(
     async (email: string, password: string) => {
@@ -119,8 +145,24 @@ export function FirebaseAuthProvider({children}: React.PropsWithChildren<{}>) {
 
   const refreshActiveSession = useCallback(
     async (active: ActiveFirebaseSession): Promise<ActiveFirebaseSession> => {
+      const generation = sessionGenerationRef.current
+      if (sessionRef.current !== active) {
+        throw new Error('Please sign in to continue.')
+      }
       const refreshed = await refreshFirebaseToken(active.user.refreshToken)
+      if (
+        generation !== sessionGenerationRef.current ||
+        sessionRef.current !== active
+      ) {
+        throw new Error('Please sign in to continue.')
+      }
       const profile = await getFirebaseAuthUser(refreshed.id_token)
+      if (
+        generation !== sessionGenerationRef.current ||
+        sessionRef.current !== active
+      ) {
+        throw new Error('Please sign in to continue.')
+      }
       const user: FirebaseAuthUser = {
         localId: refreshed.user_id,
         email: profile.email,
@@ -139,17 +181,36 @@ export function FirebaseAuthProvider({children}: React.PropsWithChildren<{}>) {
           user.localId,
           user.idToken,
         )
+        if (
+          generation !== sessionGenerationRef.current ||
+          sessionRef.current !== nextSession
+        ) {
+          throw new Error('Please sign in to continue.')
+        }
         setCurrentProfile(refreshedProfile)
-      } catch {
+      } catch (cause) {
+        if (
+          generation !== sessionGenerationRef.current ||
+          sessionRef.current !== nextSession
+        ) {
+          throw new Error('Please sign in to continue.')
+        }
         setCurrentProfile(null)
       }
       await AsyncStorage.setItem(
         STORAGE_KEY,
         JSON.stringify(toStoredSession(user)),
       )
+      if (
+        generation !== sessionGenerationRef.current ||
+        sessionRef.current !== nextSession
+      ) {
+        await persistLatestSession()
+        throw new Error('Please sign in to continue.')
+      }
       return nextSession
     },
-    [],
+    [persistLatestSession],
   )
 
   const getIdToken = useCallback(async () => {
@@ -160,9 +221,20 @@ export function FirebaseAuthProvider({children}: React.PropsWithChildren<{}>) {
     if (active.expiresAt > Date.now() + REFRESH_MARGIN_MS) {
       return active.user.idToken
     }
-    const refreshed = await refreshActiveSession(active)
-    return refreshed.user.idToken
-  }, [refreshActiveSession])
+    try {
+      const refreshed = await refreshActiveSession(active)
+      return refreshed.user.idToken
+    } catch (cause) {
+      if (
+        sessionRef.current === active &&
+        cause instanceof Error &&
+        cause.message.toLowerCase().includes('session expired')
+      ) {
+        await clearSession()
+      }
+      throw cause
+    }
+  }, [refreshActiveSession, clearSession])
 
   const sendPasswordResetEmail = useCallback(async (email: string) => {
     await sendFirebasePasswordResetEmail(email)
