@@ -9,13 +9,13 @@ import {
   useState,
 } from 'react'
 
-import {createMomentoAccount, type CreateMomentoAccountInput} from './account'
+import {type CreateMomentoAccountInput, createMomentoAccount} from './account'
 import {
+  type FirebaseAuthUser,
   getFirebaseAuthUser,
   refreshFirebaseToken,
   sendFirebasePasswordResetEmail,
   signInWithFirebase,
-  type FirebaseAuthUser,
 } from './auth'
 
 const STORAGE_KEY = 'MOMENTO_FIREBASE_SESSION'
