@@ -159,3 +159,12 @@ export async function getFirebaseAuthUser(
   }
   return user
 }
+
+
+/** Delete a newly created account when its initial profile cannot be saved. */
+export async function deleteFirebaseAccount(idToken: string): Promise<void> {
+  await postAuthRequest<Record<string, never>>(
+    `${IDENTITY_TOOLKIT_URL}:delete`,
+    {idToken},
+  )
+}
