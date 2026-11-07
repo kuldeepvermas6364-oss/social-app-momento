@@ -5,6 +5,12 @@ import {RichText as RichTextAPI} from '@bsky/sdk/richtext'
 import {useIsFocused, useNavigation, useRoute, type RouteProp} from '@react-navigation/native'
 
 import {type CommonNavigatorParams, type NavigationProp} from '#/lib/routes/types'
+import {getCurrentState, useOnAppStateChange} from '#/lib/appState'
+import {createPlaybackDurationTracker} from '#/lib/media/video/analytics'
+import {
+  createPlaybackTelemetry,
+  type PlaybackTelemetry,
+} from '#/lib/media/video/playbackTelemetry'
 import {POST_TOMBSTONE, usePostShadow} from '#/state/cache/post-shadow'
 import {useProfileShadow} from '#/state/cache/profile-shadow'
 import {
@@ -189,6 +195,8 @@ function VideoCard({
   const lastKnownTime = useRef<number | undefined>(undefined)
   const hasTrackedView = useRef(false)
   const hasTrackedVideoImpression = useRef(false)
+  const playbackStartTracked = useRef(false)
+  const telemetryRef = useRef<PlaybackTelemetry | null>(null)
   const [onScreen, setOnScreen] = useState(false)
   const {active: selectedByViewport, setActive, sendPosition} = useActiveVideoWeb()
   const {sendInteraction, feedDescriptor} = useFeedFeedbackContext()
@@ -207,8 +215,54 @@ function VideoCard({
     profile,
     'ImmersiveVideo',
   )
+  const presentation = item.embed.presentation === 'gif' ? 'gif' : 'video'
+  const [durationTracker] = useState(() => {
+    const tracker = createPlaybackDurationTracker({
+      enabled: presentation !== 'gif',
+      onSegment: segment => {
+        ax.metric('video:playback:duration', {
+          ...segment,
+          postUri: item.post.uri,
+          postAuthorDid: item.post.author.did,
+          context: 'immersiveFeed',
+          presentation,
+        })
+      },
+    })
+    tracker.setForeground(getCurrentState() === 'active')
+    return tracker
+  })
+
+  useOnAppStateChange(state => {
+    durationTracker.setForeground(state === 'active')
+  })
 
   const active = routeFocused && selectedByViewport
+
+  useEffect(() => {
+    durationTracker.setActive(active && onScreen)
+  }, [active, durationTracker, onScreen])
+
+  useEffect(() => {
+    if (active) {
+      if (telemetryRef.current == null) {
+        telemetryRef.current = createPlaybackTelemetry({
+          surface: 'feed',
+          presentation,
+        })
+      }
+      telemetryRef.current.activated()
+    } else {
+      telemetryRef.current?.deactivated()
+    }
+  }, [active, presentation])
+
+  useEffect(() => {
+    return () => {
+      telemetryRef.current?.deactivated()
+      durationTracker.flush('unmounted')
+    }
+  }, [durationTracker])
 
   useEffect(() => {
     const node = cardRef.current
@@ -286,19 +340,26 @@ function VideoCard({
             onScreen={onScreen && routeFocused}
             lastKnownTime={lastKnownTime}
             onPlaybackStart={autoplay => {
+              if (playbackStartTracked.current) return
+              playbackStartTracked.current = true
               ax.metric('video:playback:start', {
                 postUri: item.post.uri,
                 postAuthorDid: item.post.author.did,
                 context: 'immersiveFeed',
-                presentation: item.embed.presentation === 'gif' ? 'gif' : 'video',
+                presentation,
                 autoplay,
               })
             }}
             onPlaybackProgress={time => {
               lastKnownTime.current = time
+              durationTracker.observeProgress(time)
             }}
-            onPlaybackStateChange={() => {}}
-            onPlaybackEnd={() => {}}
+            onPlaybackStateChange={state => {
+              durationTracker.setPlaying(state === 'playing')
+              durationTracker.setBuffering(state === 'buffering')
+              if (state === 'playing') telemetryRef.current?.playing()
+            }}
+            onPlaybackEnd={() => durationTracker.flush('ended')}
           />
         </ReportDialogMetadataContext.Provider>
       </ErrorBoundary>
