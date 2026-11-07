@@ -39,6 +39,15 @@ async function parseDatabaseResponse<T>(response: Response): Promise<T> {
   return data as T
 }
 
+/** Read the signed-in user's public Momento profile from RTDB. */
+export async function getFirebaseUserProfile(
+  uid: string,
+  idToken: string,
+): Promise<FirebaseUserProfile | null> {
+  const response = await fetch(databaseUrl(`users/${uid}`, idToken))
+  return parseDatabaseResponse<FirebaseUserProfile | null>(response)
+}
+
 /**
  * Reserve a username with a conditional write. The null_etag precondition
  * prevents two new accounts from claiming the same username concurrently.
