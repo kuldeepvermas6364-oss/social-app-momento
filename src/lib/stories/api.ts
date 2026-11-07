@@ -1,6 +1,7 @@
 import {type BlobRef, type Client} from '@atproto/lex'
 import {
   type AtIdentifierString,
+  type DidString,
   AtUri,
   toDatetimeString,
 } from '@atproto/syntax'
@@ -30,7 +31,7 @@ export type CreateStoryOptions = {
 export type StoryView = {
   uri: string
   cid: string
-  authorDid: string
+  authorDid: DidString
   record: app.bsky.feed.post.Main
   mediaType: StoryMediaType
   mediaUrl: string
@@ -135,8 +136,8 @@ export async function listStoriesForAuthors(
   now: number = Date.now(),
 ): Promise<StoryView[]> {
   const uniqueDids = [...new Set(authorDids)].slice(0, 30)
-  const results = await Promise.all(
-    uniqueDids.map(async authorDid => {
+  const results: StoryView[][] = await Promise.all(
+    uniqueDids.map(async (authorDid): Promise<StoryView[]> => {
       try {
         const response = await appviewClient.call(
           app.bsky.feed.getAuthorFeed,
@@ -147,7 +148,8 @@ export async function listStoriesForAuthors(
           },
         )
 
-        return response.feed.flatMap(item => {
+        const authorStories: StoryView[] = response.feed.flatMap(
+          (item): StoryView[] => {
           const record = item.post.record as app.bsky.feed.post.Main
           if (!record.tags?.includes(MOMENTO_STORY_TAG)) return []
           if (
@@ -171,7 +173,7 @@ export async function listStoriesForAuthors(
               {
                 uri: item.post.uri,
                 cid: item.post.cid,
-                authorDid,
+                authorDid: authorDid as DidString,
                 record,
                 mediaType: 'image' as const,
                 mediaUrl: imageUrl,
@@ -185,7 +187,7 @@ export async function listStoriesForAuthors(
               {
                 uri: item.post.uri,
                 cid: item.post.cid,
-                authorDid,
+                authorDid: authorDid as DidString,
                 record,
                 mediaType: 'video' as const,
                 mediaUrl: videoUrl,
@@ -194,8 +196,10 @@ export async function listStoriesForAuthors(
             ]
           }
 
-          return []
-        })
+            return []
+          },
+        )
+        return authorStories
       } catch {
         // An unavailable account or AppView must not block other stories.
         return []
