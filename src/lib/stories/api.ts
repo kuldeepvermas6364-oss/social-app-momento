@@ -165,10 +165,8 @@ export async function listStoriesForAuthors(
           const embed = item.post.embed as StoryEmbedView | undefined
           if (!embed) return []
 
-          if (
-            embed.$type === 'app.bsky.embed.images#view' &&
-            embed.images?.[0]?.fullsize
-          ) {
+          const imageUrl = embed.images?.[0]?.fullsize
+          if (embed.$type === 'app.bsky.embed.images#view' && imageUrl) {
             return [
               {
                 uri: item.post.uri,
@@ -176,15 +174,13 @@ export async function listStoriesForAuthors(
                 authorDid,
                 record,
                 mediaType: 'image' as const,
-                mediaUrl: embed.images[0].fullsize,
+                mediaUrl: imageUrl,
               },
             ]
           }
 
-          if (
-            embed.$type === 'app.bsky.embed.video#view' &&
-            embed.playlist
-          ) {
+          const videoUrl = embed.playlist
+          if (embed.$type === 'app.bsky.embed.video#view' && videoUrl) {
             return [
               {
                 uri: item.post.uri,
@@ -192,7 +188,7 @@ export async function listStoriesForAuthors(
                 authorDid,
                 record,
                 mediaType: 'video' as const,
-                mediaUrl: embed.playlist,
+                mediaUrl: videoUrl,
                 thumbnailUrl: embed.thumbnail,
               },
             ]
