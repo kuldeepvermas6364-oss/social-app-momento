@@ -40,8 +40,8 @@ export type StoryView = {
 /** Maps only media formats supported by the standard AT Protocol embeds. */
 export function getStoryMediaType(mime: string): StoryMediaType {
   if (mime.startsWith('image/')) return 'image'
-  if (mime === 'video/mp4') return 'video'
-  throw new TypeError('Stories support images and MP4 videos only')
+  if (mime.startsWith('video/')) return 'video'
+  throw new TypeError('Stories support image and video media only')
 }
 
 /**
