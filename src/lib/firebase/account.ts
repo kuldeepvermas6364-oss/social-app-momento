@@ -27,7 +27,11 @@ export async function createMomentoAccount(
   const email = input.email.trim().toLowerCase()
   const username = input.username.trim().toLowerCase()
   const displayName = input.displayName.trim()
-  const authUser = await createFirebaseAccount(email, input.password)
+  const authUser = await createFirebaseAccount(
+    email,
+    input.password,
+    displayName,
+  )
   let usernameClaimed = false
 
   try {
