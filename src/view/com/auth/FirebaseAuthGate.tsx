@@ -1,4 +1,4 @@
-import {useMemo, useState} from 'react'
+import {useState} from 'react'
 import {
   KeyboardAvoidingView,
   Platform,
@@ -279,7 +279,7 @@ export function FirebaseAuthGate({onDismiss}: {onDismiss?: () => void}) {
                 </Text>
               ) : null}
               {notice ? (
-                <Text style={[a.text_sm, {color: t.palette.positive_500}]}>
+                <Text style={[a.text_sm, {color: t.palette.primary_500}]}>
                   {notice}
                 </Text>
               ) : null}
