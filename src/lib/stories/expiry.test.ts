@@ -44,7 +44,9 @@ describe('Momento story expiry', () => {
       isStoryActive(
         {
           createdAt,
-          expiresAt: new Date(createdAtMs + STORY_DURATION_MS + 1).toISOString(),
+          expiresAt: new Date(
+            createdAtMs + STORY_DURATION_MS + 1,
+          ).toISOString(),
         },
         createdAtMs + 1,
       ),
