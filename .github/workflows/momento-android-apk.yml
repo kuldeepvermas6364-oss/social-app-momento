@@ -97,12 +97,12 @@ jobs:
               }
           """
           if "release {\n        storeFile file(\"momento-release.jks\")" not in source:
-              source, count = re.subn(r"signingConfigs\\s*\\{", signing_block, source, count=1)
+              source, count = re.subn(r"signingConfigs\s*\{", signing_block, source, count=1)
               if count != 1:
                   raise SystemExit("Could not add the release signing configuration.")
           source, count = re.subn(
-              r"(release\\s*\\{[\\s\\S]*?signingConfig\\s+)signingConfigs\\.debug",
-              r"\\1signingConfigs.release",
+              r"(release\s*\{[\s\S]*?signingConfig\s+)signingConfigs\.debug",
+              r"\1signingConfigs.release",
               source,
               count=1,
           )
