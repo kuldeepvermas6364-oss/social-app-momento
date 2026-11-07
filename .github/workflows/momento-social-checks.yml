@@ -64,6 +64,14 @@ jobs:
         continue-on-error: true
         run: pnpm prettier
 
+      - name: Capture automatic import-sort fixes
+        id: import_fixes
+        continue-on-error: true
+        run: |
+          pnpm exec oxlint --fix src modules || true
+          echo "--- import-sort autofix diff ---"
+          git diff -- src modules
+
       - name: Run unit and component tests
         id: tests
         continue-on-error: true
