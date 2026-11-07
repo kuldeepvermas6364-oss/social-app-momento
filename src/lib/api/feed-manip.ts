@@ -483,6 +483,41 @@ export class FeedTuner {
   }
 
   /**
+   * Momento's For You ranking layer. It reorders the current candidate page
+   * using freshness, meaningful engagement, and the viewer's follow graph.
+   * Moderation and language filtering run before this tuner.
+   */
+  static momentoForYou(
+    _tuner: FeedTuner,
+    slices: FeedViewPostsSlice[],
+    _dryRun: boolean,
+  ): FeedViewPostsSlice[] {
+    const now = Date.now()
+    return slices
+      .map((slice, index) => {
+        const post = slice._feedPost.post
+        const ageHours = Math.max(
+          0,
+          (now - Date.parse(post.indexedAt)) / (60 * 60 * 1000),
+        )
+        const freshness = 8 * Math.exp(-ageHours / 36)
+        const engagement =
+          1.5 * Math.log1p(post.likeCount ?? 0) +
+          2 * Math.log1p(post.repostCount ?? 0) +
+          2.5 * Math.log1p(post.replyCount ?? 0)
+        const network = post.author.viewer?.following ? 3 : 0
+        const media = post.embed ? 1 : 0
+        return {
+          slice,
+          index,
+          score: freshness + engagement + network + media,
+        }
+      })
+      .sort((a, b) => b.score - a.score || a.index - b.index)
+      .map(({slice}) => slice)
+  }
+
+  /**
    * This function filters a list of FeedViewPostsSlice items based on whether they contain text in a
    * preferred language.
    * @param {string[]} preferredLangsCode2 - An array of preferred language codes in ISO 639-1 or ISO 639-2 format.
