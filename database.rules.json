@@ -51,7 +51,7 @@
     "usernames": {
       "$username": {
         ".read": true,
-        ".write": "auth != null && ((!data.exists() && newData.val() === auth.uid) || (data.val() === auth.uid && !newData.exists()))",
+        ".write": "auth != null && $username.matches(/^[a-z0-9_]{3,20}$/) && ((!data.exists() && newData.val() === auth.uid) || (data.val() === auth.uid && !newData.exists()))",
         ".validate": "!newData.exists() || (newData.isString() && newData.val() === auth.uid)"
       }
     }
