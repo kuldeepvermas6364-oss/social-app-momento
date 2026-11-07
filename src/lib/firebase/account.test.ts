@@ -9,16 +9,13 @@ jest.mock('./database', () => ({
   releaseFirebaseUsername: jest.fn(),
 }))
 
-import {
-  createFirebaseAccount,
-  deleteFirebaseAccount,
-} from './auth'
+import {createMomentoAccount} from './account'
+import {createFirebaseAccount, deleteFirebaseAccount} from './auth'
 import {
   claimFirebaseUsername,
   createFirebaseUserProfile,
   releaseFirebaseUsername,
 } from './database'
-import {createMomentoAccount} from './account'
 
 const firebaseUser = {
   localId: 'firebase-uid',
@@ -39,10 +36,10 @@ describe('createMomentoAccount', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     jest.mocked(createFirebaseAccount).mockResolvedValue(firebaseUser)
-    jest.mocked(claimFirebaseUsername).mockResolvedValue()
-    jest.mocked(createFirebaseUserProfile).mockResolvedValue()
-    jest.mocked(releaseFirebaseUsername).mockResolvedValue()
-    jest.mocked(deleteFirebaseAccount).mockResolvedValue()
+    jest.mocked(claimFirebaseUsername).mockResolvedValue(undefined)
+    jest.mocked(createFirebaseUserProfile).mockResolvedValue(undefined)
+    jest.mocked(releaseFirebaseUsername).mockResolvedValue(undefined)
+    jest.mocked(deleteFirebaseAccount).mockResolvedValue(undefined)
   })
 
   it('creates a Firebase account, reserves its username, and writes its profile', async () => {
