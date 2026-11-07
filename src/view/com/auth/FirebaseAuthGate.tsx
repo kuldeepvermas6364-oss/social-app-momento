@@ -164,7 +164,7 @@ export function FirebaseAuthGate({onDismiss}: {onDismiss?: () => void}) {
   if (!isReady) {
     return (
       <View style={[a.flex_1, a.align_center, a.justify_center, t.atoms.bg]}>
-        <Loader size="large" />
+        <Loader size="lg" />
       </View>
     )
   }
