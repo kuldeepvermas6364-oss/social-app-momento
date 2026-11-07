@@ -79,7 +79,7 @@ jobs:
         continue-on-error: true
         run: |
           pnpm exec oxlint --fix src modules || true
-          pnpm exec prettier --write feed-generator/src/index.js src/App.tsx src/lib/firebase/account.ts src/lib/firebase/auth.ts src/lib/firebase/database.ts src/lib/firebase/session.tsx src/view/com/auth/FirebaseAuthGate.tsx src/view/shell/createNativeStackNavigatorWithAuth.tsx src/lib/firebase/auth.test.ts src/lib/api/feed/__tests__/utils.test.ts src/lib/api/feed/merge.test.ts src/lib/api/feed/custom.test.ts
+          pnpm exec prettier --write feed-generator/src/index.js src/App.tsx src/lib/firebase/account.ts src/lib/firebase/auth.ts src/lib/firebase/database.ts src/lib/firebase/session.tsx src/view/com/auth/FirebaseAuthGate.tsx src/view/shell/createNativeStackNavigatorWithAuth.tsx src/lib/firebase/auth.test.ts src/lib/firebase/account.test.ts src/lib/api/feed/__tests__/utils.test.ts src/lib/api/feed/merge.test.ts src/lib/api/feed/custom.test.ts
           echo "--- formatter and import-sort diff ---"
           git diff -- src modules feed-generator/src/index.js
 
