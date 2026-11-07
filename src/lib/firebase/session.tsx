@@ -13,6 +13,7 @@ import {
   getFirebaseAuthUser,
   refreshFirebaseToken,
   signInWithFirebase,
+  sendFirebasePasswordResetEmail,
   type FirebaseAuthUser,
 } from './auth'
 import {createMomentoAccount, type CreateMomentoAccountInput} from './account'
@@ -145,7 +146,6 @@ export function FirebaseAuthProvider({
   }, [refreshActiveSession])
 
   const sendPasswordResetEmail = useCallback(async (email: string) => {
-    const {sendFirebasePasswordResetEmail} = await import('./auth')
     await sendFirebasePasswordResetEmail(email)
   }, [])
 
