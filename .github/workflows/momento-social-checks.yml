@@ -50,7 +50,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Compile translation catalogs
-        run: pnpm intl:build
+        run: pnpm intl:compile
 
       - name: Verify generated AT Protocol lexicons
         run: pnpm lexicons:verify
