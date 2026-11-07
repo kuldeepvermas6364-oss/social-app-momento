@@ -69,9 +69,7 @@ describe('createMomentoAccount', () => {
 
   it('releases the username and deletes the Auth account when profile creation fails', async () => {
     const profileError = new Error('RTDB profile write failed')
-    jest
-      .mocked(createFirebaseUserProfile)
-      .mockRejectedValueOnce(profileError)
+    jest.mocked(createFirebaseUserProfile).mockRejectedValueOnce(profileError)
 
     await expect(createMomentoAccount(input)).rejects.toBe(profileError)
 
