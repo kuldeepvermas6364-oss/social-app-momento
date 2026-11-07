@@ -554,15 +554,12 @@ module.exports = function (_config) {
                       'com.apple.developer.parent-application-identifiers': [
                         '$(AppIdentifierPrefix)xyz.blueskyweb.app',
                       ],
-                      'com.apple.developer.associated-domains':
-                        ASSOCIATED_DOMAINS,
                     },
                   },
                 ],
               },
             },
           },
-          projectId: '55bd077a-d905-4184-9c7f-94789ba0f302',
         },
       },
       experiments: {
