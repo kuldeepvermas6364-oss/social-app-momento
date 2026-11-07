@@ -234,3 +234,9 @@ export function useFirebaseAuth(): FirebaseAuthContextValue {
   }
   return context
 }
+
+
+/** Optional access for transitional screens and isolated component tests. */
+export function useMaybeFirebaseAuth(): FirebaseAuthContextValue | null {
+  return useContext(FirebaseAuthContext)
+}
