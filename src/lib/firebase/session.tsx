@@ -10,6 +10,7 @@ import {
 } from 'react'
 
 import {type CreateMomentoAccountInput, createMomentoAccount} from './account'
+import {getFirebaseUserProfile, type FirebaseUserProfile} from './database'
 import {
   type FirebaseAuthUser,
   getFirebaseAuthUser,
@@ -34,6 +35,7 @@ type ActiveFirebaseSession = {
 
 type FirebaseAuthContextValue = {
   currentUser: FirebaseAuthUser | null
+  currentProfile: FirebaseUserProfile | null
   isReady: boolean
   signIn: (email: string, password: string) => Promise<void>
   createAccount: (input: CreateMomentoAccountInput) => Promise<void>
@@ -68,6 +70,7 @@ export function FirebaseAuthProvider({
   children,
 }: React.PropsWithChildren<{}>) {
   const [session, setSession] = useState<ActiveFirebaseSession | null>(null)
+  const [currentProfile, setCurrentProfile] = useState<FirebaseUserProfile | null>(null)
   const [isReady, setIsReady] = useState(false)
   const sessionRef = useRef<ActiveFirebaseSession | null>(null)
 
@@ -75,6 +78,13 @@ export function FirebaseAuthProvider({
     const nextSession = createActiveSession(user)
     sessionRef.current = nextSession
     setSession(nextSession)
+    try {
+      const profile = await getFirebaseUserProfile(user.localId, user.idToken)
+      setCurrentProfile(profile)
+    } catch {
+      // Keep authentication available if the optional public profile is unavailable.
+      setCurrentProfile(null)
+    }
     await AsyncStorage.setItem(
       STORAGE_KEY,
       JSON.stringify(toStoredSession(user)),
@@ -84,6 +94,7 @@ export function FirebaseAuthProvider({
   const clearSession = useCallback(async () => {
     sessionRef.current = null
     setSession(null)
+    setCurrentProfile(null)
     await AsyncStorage.removeItem(STORAGE_KEY)
   }, [])
 
@@ -202,6 +213,7 @@ export function FirebaseAuthProvider({
   const value = useMemo<FirebaseAuthContextValue>(
     () => ({
       currentUser: session?.user ?? null,
+      currentProfile,
       isReady,
       signIn,
       createAccount,
@@ -211,6 +223,7 @@ export function FirebaseAuthProvider({
     }),
     [
       session,
+      currentProfile,
       isReady,
       signIn,
       createAccount,
