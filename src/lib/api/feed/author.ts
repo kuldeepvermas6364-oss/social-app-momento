@@ -29,7 +29,7 @@ export class AuthorFeedAPI implements FeedAPI {
     return params
   }
 
-  async peekLatest(): Promise<app.bsky.feed.defs.FeedViewPost> {
+  async peekLatest(): Promise<app.bsky.feed.defs.FeedViewPost | undefined> {
     const data = await this.client.call(app.bsky.feed.getAuthorFeed, {
       ...this.params,
       limit: 1,
