@@ -23,27 +23,6 @@ module.exports = function (_config) {
   const IS_E2E = process.env.EXPO_PUBLIC_ENV === 'e2e'
   const IS_DEV = !IS_TESTFLIGHT && !IS_PRODUCTION
 
-  const ASSOCIATED_DOMAINS = [
-    'applinks:bsky.app',
-    'applinks:staging.bsky.app',
-    'appclips:bsky.app',
-    'appclips:go.bsky.app', // Allows App Clip to work when scanning QR codes
-    // Password AutoFill offers credentials saved for either site (bsky.social
-    // is the account host). Both serve a matching apple-app-site-association.
-    'webcredentials:bsky.app',
-    'webcredentials:bsky.social',
-    // When testing local services, enter an ngrok (et al) domain here. It must use a standard HTTP/HTTPS port.
-    ...(IS_DEV || IS_TESTFLIGHT ? [] : []),
-  ]
-
-  /*
-   * EXPO_PUBLIC_ENV is also an EAS environment secret, which wins over a build
-   * profile's env, so profiles opt out of OTA updates with their own flag. A
-   * dev client with updates on rejects unsigned manifests from a local Metro.
-   */
-  const UPDATES_ENABLED =
-    (IS_TESTFLIGHT || IS_PRODUCTION) && !process.env.DISABLE_UPDATES
-
   const USE_SENTRY = Boolean(process.env.SENTRY_AUTH_TOKEN)
 
   const IOS_ICON_FILE =
@@ -135,7 +114,6 @@ module.exports = function (_config) {
             'zh-Hant',
           ],
         },
-        associatedDomains: ASSOCIATED_DOMAINS,
         entitlements: {
           'com.apple.developer.kernel.increased-memory-limit': true,
           'com.apple.developer.kernel.extended-virtual-addressing': true,
@@ -205,26 +183,6 @@ module.exports = function (_config) {
         },
         package: 'com.kuldeep.momento',
         blockedPermissions: ['android.permission.ACCESS_FINE_LOCATION'],
-        intentFilters: [
-          {
-            action: 'VIEW',
-            autoVerify: true,
-            data: [
-              {
-                scheme: 'https',
-              },
-              ...(IS_DEV
-                ? [
-                    {
-                      scheme: 'http',
-                      host: 'localhost:19006',
-                    },
-                  ]
-                : []),
-            ],
-            category: ['BROWSABLE', 'DEFAULT'],
-          },
-        ],
       },
       web: {
         bundler: 'metro',
