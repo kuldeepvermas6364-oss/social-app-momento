@@ -15,11 +15,7 @@ import {
 
 const fetchMock = jest.spyOn(global, 'fetch')
 
-function response(
-  body: unknown,
-  ok = true,
-  status = 200,
-): Response {
+function response(body: unknown, ok = true, status = 200): Response {
   return {
     ok,
     status,
@@ -115,11 +111,7 @@ describe('Momento Firebase Authentication REST client', () => {
 
   it('returns a safe error for invalid credentials', async () => {
     fetchMock.mockResolvedValueOnce(
-      response(
-        {error: {message: 'INVALID_LOGIN_CREDENTIALS'}},
-        false,
-        400,
-      ),
+      response({error: {message: 'INVALID_LOGIN_CREDENTIALS'}}, false, 400),
     )
 
     await expect(
