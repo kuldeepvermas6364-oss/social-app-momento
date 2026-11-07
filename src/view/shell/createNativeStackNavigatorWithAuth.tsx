@@ -132,7 +132,9 @@ function NativeStackNavigator({
   if (hasSession && currentAccount?.signupQueued) {
     return <SignupQueued />
   }
-  if (showLoggedOut) {
+  // A Firebase-authenticated user must not be sent back to the logged-out
+  // surface by legacy account-switch UI state.
+  if (showLoggedOut && !firebaseUser) {
     return <LoggedOut onDismiss={() => setShowLoggedOut(false)} />
   }
   if (onboardingState.isActive) {
