@@ -39,7 +39,7 @@ export class CustomFeedAPI implements FeedAPI {
     this.userInterests = userInterests
   }
 
-  async peekLatest(): Promise<app.bsky.feed.defs.FeedViewPost> {
+  async peekLatest(): Promise<app.bsky.feed.defs.FeedViewPost | undefined> {
     const contentLangs = getContentLanguages().join(',')
     const data = await this.client.call(
       app.bsky.feed.getFeed,
