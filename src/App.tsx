@@ -85,7 +85,10 @@ import {
 import {TrendingTopicsWidgetSync} from '#/features/trendingWidget/Sync'
 import * as Geo from '#/geolocation'
 import {Splash} from '#/Splash'
-import {FirebaseAuthProvider} from '#/lib/firebase/session'
+import {
+  FirebaseAuthProvider,
+  useFirebaseAuth,
+} from '#/lib/firebase/session'
 
 void identifyDevice(getDeviceId(), setupDeviceId)
 
@@ -109,6 +112,7 @@ void prefetchAppConfig()
 function InnerApp() {
   const [isReady, setIsReady] = useState(false)
   const {currentAccount} = useSession()
+  const {isReady: isFirebaseReady} = useFirebaseAuth()
   const theme = useColorModeTheme()
   const {t: l} = useLingui()
   const hasCheckedLanding = useLandingEntry()
@@ -140,7 +144,7 @@ function InnerApp() {
     <Alf theme={theme}>
       <ThemeProvider theme={theme}>
         <ContextMenuProvider>
-          <Splash isReady={isReady && hasCheckedLanding}>
+          <Splash isReady={isReady && isFirebaseReady && hasCheckedLanding}>
             <VideoVolumeProvider>
               <GestureHandlerRootView style={a.h_full}>
                 <Fragment
