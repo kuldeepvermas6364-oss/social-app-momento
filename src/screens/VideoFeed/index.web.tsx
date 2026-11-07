@@ -1,10 +1,10 @@
 import {createElement, useCallback, useEffect, useMemo, useRef, useState} from 'react'
-import {FlatList, Pressable, View, useWindowDimensions} from 'react-native'
+import {FlatList, Pressable, useWindowDimensions, View} from 'react-native'
 import {useSafeAreaInsets} from 'react-native-safe-area-context'
 import {Image} from 'expo-image'
 import {type ModerationDecision} from '@bsky/sdk/moderation'
 import {RichText as RichTextAPI} from '@bsky/sdk/richtext'
-import {useIsFocused, useNavigation, useRoute, type RouteProp} from '@react-navigation/native'
+import {type RouteProp, useIsFocused, useNavigation, useRoute} from '@react-navigation/native'
 
 import {getCurrentState, useOnAppStateChange} from '#/lib/appState'
 import {createPlaybackDurationTracker} from '#/lib/media/video/analytics'
@@ -35,9 +35,9 @@ import {VideoEmbedInnerWeb} from '#/components/Post/Embed/VideoEmbed/VideoEmbedI
 import {PostControls} from '#/components/PostControls'
 import {Text} from '#/components/Typography'
 import {useAnalytics} from '#/analytics'
+import {usePostFeedQuery as useFollowingV2PostFeedQuery} from '#/features/followingV2/home/queries/postFeed'
 import {app} from '#/lexicons'
 import * as bsky from '#/types/bsky'
-import {usePostFeedQuery as useFollowingV2PostFeedQuery} from '#/features/followingV2/home/queries/postFeed'
 
 type VideoPost = {
   key: string
@@ -163,7 +163,7 @@ export function VideoFeed() {
                     <View style={{height: 64, alignItems: 'center', justifyContent: 'center'}}>
                       <Text style={{color: 'white'}}>Loading more…</Text>
                     </View>
-                  ) : null
+                  ) : undefined
                 }
               />
             </View>
@@ -398,6 +398,7 @@ function VideoCard({
                 onPress={() => requireAuth(() => isFollowing ? void queueUnfollow() : void queueFollow())}
                 accessibilityRole="button"
                 accessibilityLabel={isFollowing ? 'Unfollow creator' : 'Follow creator'}
+                accessibilityHint={isFollowing ? 'Stops following this creator' : 'Follows this creator'}
                 style={{alignSelf: 'flex-start', paddingVertical: 8, paddingHorizontal: 12, backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 18}}>
                 <Text style={{color: 'white'}}>{isFollowing ? 'Following' : 'Follow'}</Text>
               </Pressable>
