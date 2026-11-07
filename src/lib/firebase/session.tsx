@@ -92,6 +92,7 @@ export function FirebaseAuthProvider({children}: React.PropsWithChildren<{}>) {
       const nextSession = createActiveSession(user)
       sessionRef.current = nextSession
       setSession(nextSession)
+      setCurrentProfile(null)
       try {
         const profile = await getFirebaseUserProfile(user.localId, user.idToken)
         if (generation !== sessionGenerationRef.current) return
@@ -188,7 +189,7 @@ export function FirebaseAuthProvider({children}: React.PropsWithChildren<{}>) {
           throw new Error('Please sign in to continue.')
         }
         setCurrentProfile(refreshedProfile)
-      } catch (cause) {
+      } catch {
         if (
           generation !== sessionGenerationRef.current ||
           sessionRef.current !== nextSession
