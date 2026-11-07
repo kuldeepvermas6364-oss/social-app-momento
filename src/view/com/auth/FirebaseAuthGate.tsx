@@ -11,8 +11,8 @@ import * as EmailValidator from 'email-validator'
 
 import {useFirebaseAuth} from '#/lib/firebase/session'
 import {atoms as a, useTheme} from '#/alf'
-import {Text} from '#/components/Typography'
 import {Loader} from '#/components/Loader'
+import {Text} from '#/components/Typography'
 
 type Mode = 'signIn' | 'signUp'
 
@@ -211,7 +211,9 @@ export function FirebaseAuthGate({onDismiss}: {onDismiss?: () => void}) {
           ) : (
             <>
               <Text style={[a.text_xl, a.font_semi_bold, t.atoms.text]}>
-                {mode === 'signIn' ? 'Sign in to Momento' : 'Create your account'}
+                {mode === 'signIn'
+                  ? 'Sign in to Momento'
+                  : 'Create your account'}
               </Text>
               <Text style={[a.text_sm, t.atoms.text_contrast_medium]}>
                 {mode === 'signIn'
@@ -223,6 +225,7 @@ export function FirebaseAuthGate({onDismiss}: {onDismiss?: () => void}) {
                 <>
                   <TextInput
                     accessibilityLabel="Display name"
+                    accessibilityHint="Shown on your Momento profile."
                     autoCapitalize="words"
                     onChangeText={setDisplayName}
                     placeholder="Display name"
@@ -232,6 +235,7 @@ export function FirebaseAuthGate({onDismiss}: {onDismiss?: () => void}) {
                   />
                   <TextInput
                     accessibilityLabel="Username"
+                    accessibilityHint="A unique username people can use to find you."
                     autoCapitalize="none"
                     autoCorrect={false}
                     onChangeText={setUsername}
@@ -242,6 +246,7 @@ export function FirebaseAuthGate({onDismiss}: {onDismiss?: () => void}) {
                   />
                   <TextInput
                     accessibilityLabel="Date of birth"
+                    accessibilityHint="Used only for the minimum signup age check and is not saved to your profile."
                     autoCapitalize="none"
                     onChangeText={setDateOfBirth}
                     placeholder="Date of birth (YYYY-MM-DD)"
@@ -254,6 +259,7 @@ export function FirebaseAuthGate({onDismiss}: {onDismiss?: () => void}) {
 
               <TextInput
                 accessibilityLabel="Email address"
+                accessibilityHint="Used to sign in and recover your account."
                 autoCapitalize="none"
                 autoComplete="email"
                 autoCorrect={false}
@@ -266,6 +272,7 @@ export function FirebaseAuthGate({onDismiss}: {onDismiss?: () => void}) {
               />
               <TextInput
                 accessibilityLabel="Password"
+                accessibilityHint="Enter your password, at least 8 characters for a new account."
                 autoCapitalize="none"
                 autoComplete={
                   mode === 'signIn' ? 'current-password' : 'new-password'
