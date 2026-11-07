@@ -67,7 +67,9 @@ export async function createStory({
       ? asset.blob
       : (await uploadBlob(pdsClient, asset.path, asset.mime)).blob
   if (!mediaBlob) {
-    throw new Error('Video processing must finish before the story is published.')
+    throw new Error(
+      'Video processing must finish before the story is published.',
+    )
   }
   const embed: app.bsky.feed.post.Main['embed'] =
     mediaType === 'image'
@@ -150,51 +152,51 @@ export async function listStoriesForAuthors(
 
         const authorStories: StoryView[] = response.feed.flatMap(
           (item): StoryView[] => {
-          const record = item.post.record as app.bsky.feed.post.Main
-          if (!record.tags?.includes(MOMENTO_STORY_TAG)) return []
-          if (
-            !isStoryActive(
-              {
-                createdAt: record.createdAt,
-                expiresAt: getStoryExpiresAt(record.createdAt),
-              },
-              now,
-            )
-          ) {
-            return []
-          }
+            const record = item.post.record as app.bsky.feed.post.Main
+            if (!record.tags?.includes(MOMENTO_STORY_TAG)) return []
+            if (
+              !isStoryActive(
+                {
+                  createdAt: record.createdAt,
+                  expiresAt: getStoryExpiresAt(record.createdAt),
+                },
+                now,
+              )
+            ) {
+              return []
+            }
 
-          const embed = item.post.embed as StoryEmbedView | undefined
-          if (!embed) return []
+            const embed = item.post.embed as StoryEmbedView | undefined
+            if (!embed) return []
 
-          const imageUrl = embed.images?.[0]?.fullsize
-          if (embed.$type === 'app.bsky.embed.images#view' && imageUrl) {
-            return [
-              {
-                uri: item.post.uri,
-                cid: item.post.cid,
-                authorDid: authorDid as DidString,
-                record,
-                mediaType: 'image' as const,
-                mediaUrl: imageUrl,
-              },
-            ]
-          }
+            const imageUrl = embed.images?.[0]?.fullsize
+            if (embed.$type === 'app.bsky.embed.images#view' && imageUrl) {
+              return [
+                {
+                  uri: item.post.uri,
+                  cid: item.post.cid,
+                  authorDid: authorDid as DidString,
+                  record,
+                  mediaType: 'image',
+                  mediaUrl: imageUrl,
+                },
+              ]
+            }
 
-          const videoUrl = embed.playlist
-          if (embed.$type === 'app.bsky.embed.video#view' && videoUrl) {
-            return [
-              {
-                uri: item.post.uri,
-                cid: item.post.cid,
-                authorDid: authorDid as DidString,
-                record,
-                mediaType: 'video' as const,
-                mediaUrl: videoUrl,
-                thumbnailUrl: embed.thumbnail,
-              },
-            ]
-          }
+            const videoUrl = embed.playlist
+            if (embed.$type === 'app.bsky.embed.video#view' && videoUrl) {
+              return [
+                {
+                  uri: item.post.uri,
+                  cid: item.post.cid,
+                  authorDid: authorDid as DidString,
+                  record,
+                  mediaType: 'video',
+                  mediaUrl: videoUrl,
+                  thumbnailUrl: embed.thumbnail,
+                },
+              ]
+            }
 
             return []
           },
