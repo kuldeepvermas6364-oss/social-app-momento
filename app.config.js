@@ -43,7 +43,7 @@ module.exports = function (_config) {
       },
       icon: './assets/app-icons/ios_icon_default_next.png',
       userInterfaceStyle: 'automatic',
-      primaryColor: '#006AFF',
+      primaryColor: '#6B31EC',
       ios: {
         supportsTablet: true,
         bundleIdentifier: 'xyz.blueskyweb.app',
@@ -179,7 +179,7 @@ module.exports = function (_config) {
         adaptiveIcon: {
           foregroundImage: './assets/icon-android-foreground.png',
           monochromeImage: './assets/icon-android-monochrome.png',
-          backgroundColor: '#006AFF',
+          backgroundColor: '#6B31EC',
         },
         package: 'com.kuldeep.momento',
         blockedPermissions: ['android.permission.ACCESS_FINE_LOCATION'],
@@ -356,7 +356,7 @@ module.exports = function (_config) {
           'expo-notifications',
           {
             icon: './assets/icon-android-notification.png',
-            color: '#1185fe',
+            color: '#6B31EC',
             sounds: PLATFORM === 'ios' ? ['assets/dm.aiff'] : ['assets/dm.mp3'],
           },
         ],
@@ -409,13 +409,13 @@ module.exports = function (_config) {
           {
             ios: {
               enableFullScreenImage_legacy: true, // iOS only
-              backgroundColor: '#006AFF', // primary_500
-              image: './assets/splash/splash.png',
+              backgroundColor: '#F9F7FF', // Momento light splash
+              image: './assets/logo.png',
               resizeMode: 'cover',
               dark: {
                 enableFullScreenImage_legacy: true, // iOS only
-                backgroundColor: '#002861', // primary_900
-                image: './assets/splash/splash-dark.png',
+                backgroundColor: '#180E30', // Momento dark splash
+                image: './assets/logo.png',
                 resizeMode: 'cover',
               },
             },
