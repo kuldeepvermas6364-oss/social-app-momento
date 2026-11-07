@@ -59,6 +59,13 @@ jobs:
           pnpm exec oxlint src modules
           node scripts/check-sentry-browser-version.mjs
 
+      - name: Export lint diagnostics with file locations
+        continue-on-error: true
+        run: |
+          pnpm exec oxlint --format json src modules > oxlint-diagnostics.json || true
+          echo "--- JSON lint diagnostics ---"
+          cat oxlint-diagnostics.json
+
       - name: Check formatting
         id: prettier
         continue-on-error: true
