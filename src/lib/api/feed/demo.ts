@@ -11,7 +11,7 @@ export class DemoFeedAPI implements FeedAPI {
     this.client = client
   }
 
-  async peekLatest(): Promise<app.bsky.feed.defs.FeedViewPost> {
+  async peekLatest(): Promise<app.bsky.feed.defs.FeedViewPost | undefined> {
     return DEMO_FEED.feed[0]
   }
 
