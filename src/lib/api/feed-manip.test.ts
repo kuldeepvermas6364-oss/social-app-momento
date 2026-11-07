@@ -1,5 +1,5 @@
 import {type app} from '#/lexicons'
-import {createFeedViewPostsSlices} from './feed-manip'
+import {createFeedViewPostsSlices, FeedTuner} from './feed-manip'
 
 jest.mock('./feed/home', () => ({
   FALLBACK_MARKER_POST: {post: {uri: 'at://did:plc:test/app.bsky.feed.post/1'}},
@@ -46,6 +46,45 @@ describe('createFeedViewPostsSlices', () => {
       [root.uri, {opThreadPostIndex: 1, opThreadPostCount: 4}],
       [parent.uri, {opThreadPostIndex: 2, opThreadPostCount: 4}],
       [selected.uri, {opThreadPostIndex: 3, opThreadPostCount: 4}],
+    ])
+  })
+})
+
+describe('Momento For You ranking', () => {
+  it('ranks stronger engagement ahead of weaker engagement', () => {
+    const popular = post('popular')
+    popular.likeCount = 120
+    popular.repostCount = 20
+    const quiet = post('quiet')
+    quiet.likeCount = 0
+    quiet.repostCount = 0
+
+    const slices = createFeedViewPostsSlices([
+      {post: quiet},
+      {post: popular},
+    ] satisfies app.bsky.feed.defs.FeedViewPost[])
+
+    const ranked = FeedTuner.momentoForYou(new FeedTuner([]), slices, false)
+
+    expect(ranked.map(slice => slice.feedPostUri)).toEqual([
+      popular.uri,
+      quiet.uri,
+    ])
+  })
+
+  it('keeps original order when ranking scores are equal', () => {
+    const first = post('first')
+    const second = post('second')
+    const slices = createFeedViewPostsSlices([
+      {post: first},
+      {post: second},
+    ] satisfies app.bsky.feed.defs.FeedViewPost[])
+
+    const ranked = FeedTuner.momentoForYou(new FeedTuner([]), slices, false)
+
+    expect(ranked.map(slice => slice.feedPostUri)).toEqual([
+      first.uri,
+      second.uri,
     ])
   })
 })
