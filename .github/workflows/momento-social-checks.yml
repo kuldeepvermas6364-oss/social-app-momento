@@ -26,7 +26,7 @@ jobs:
   quality:
     name: Social app quality checks
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -46,20 +46,63 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Compile translation catalogs
+        run: pnpm intl:build
+
       - name: Verify generated AT Protocol lexicons
         run: pnpm lexicons:verify
 
-      - name: Lint application and native modules
-        run: pnpm lint
+      - name: Print actionable lint diagnostics
+        id: lint
+        continue-on-error: true
+        run: |
+          pnpm exec oxlint src modules
+          node scripts/check-sentry-browser-version.mjs
+
+      - name: Check formatting
+        id: prettier
+        continue-on-error: true
+        run: pnpm prettier
 
       - name: Run unit and component tests
+        id: tests
+        continue-on-error: true
         run: pnpm test-ci --runInBand
 
       - name: Typecheck Android
+        id: android
+        continue-on-error: true
         run: pnpm typecheck:android
 
       - name: Typecheck web
+        id: web
+        continue-on-error: true
         run: pnpm typecheck:web
+
+      - name: Format Momento SVG files for review
+        if: always()
+        run: |
+          pnpm exec prettier --write src/view/icons/Logomark.tsx src/view/icons/Logotype.tsx
+          echo "--- Logomark.tsx ---"
+          cat src/view/icons/Logomark.tsx
+          echo "--- Logotype.tsx ---"
+          cat src/view/icons/Logotype.tsx
+
+      - name: Enforce quality gate
+        if: always()
+        env:
+          LINT_RESULT: ${{ steps.lint.outcome }}
+          PRETTIER_RESULT: ${{ steps.prettier.outcome }}
+          TEST_RESULT: ${{ steps.tests.outcome }}
+          ANDROID_RESULT: ${{ steps.android.outcome }}
+          WEB_RESULT: ${{ steps.web.outcome }}
+        run: |
+          printf 'lint=%s prettier=%s tests=%s android=%s web=%s\n' "$LINT_RESULT" "$PRETTIER_RESULT" "$TEST_RESULT" "$ANDROID_RESULT" "$WEB_RESULT"
+          test "$LINT_RESULT" = "success"
+          test "$PRETTIER_RESULT" = "success"
+          test "$TEST_RESULT" = "success"
+          test "$ANDROID_RESULT" = "success"
+          test "$WEB_RESULT" = "success"
 
       - name: Write summary
         if: always()
@@ -67,8 +110,8 @@ jobs:
           {
             echo "## Momento social app checks"
             echo
-            echo "- Repository: `kuldeepvermas6364-oss/social-app-momento`"
-            echo "- Branch: `main`"
-            echo "- Android and web typechecks are run separately."
+            echo "- Repository: kuldeepvermas6364-oss/social-app-momento"
+            echo "- Branch: main"
+            echo "- AT Protocol lexicons, lint, formatting, tests, Android and web types are checked."
             echo "- No backend or paid API secrets are required for these checks."
           } >> "$GITHUB_STEP_SUMMARY"
