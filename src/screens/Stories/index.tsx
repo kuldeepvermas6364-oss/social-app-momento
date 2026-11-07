@@ -1,4 +1,4 @@
-import {useMemo, useState} from 'react'
+import {useEffect, useMemo, useState} from 'react'
 import {
   ActivityIndicator,
   Alert,
@@ -115,7 +115,7 @@ export function StoriesScreen() {
             borderColor: '#8885',
             borderRadius: 12,
             padding: 12,
-            color: 'inherit',
+            color: '#171717',
           }}
         />
 
@@ -259,10 +259,10 @@ export function StoriesScreen() {
 
 function StoryVideo({story}: {story: StoryView}) {
   const player = useMemo(() => createVideoPlayer(story.mediaUrl), [story.mediaUrl])
-  useMemo(() => {
+  useEffect(() => {
     player.loop = true
     player.play()
-    return player
+    return () => player.release()
   }, [player])
 
   return (
