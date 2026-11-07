@@ -123,10 +123,10 @@ function NativeStackNavigator({
   const {setShowLoggedOut} = useLoggedOutViewControls()
   const {isMobile} = useWebMediaQueries()
   const {leftNavMinimal} = useLayoutBreakpoints()
-  if (
-    (!firebaseUser || !hasSession) &&
-    (activeRouteRequiresAuth || IS_NATIVE)
-  ) {
+  // Firebase Authentication is Momento's identity provider. The legacy
+  // AT Protocol session must not block a successfully authenticated
+  // Firebase user from entering the app or opening authenticated routes.
+  if (!firebaseUser && (activeRouteRequiresAuth || IS_NATIVE)) {
     return <LoggedOut />
   }
   if (hasSession && currentAccount?.signupQueued) {
