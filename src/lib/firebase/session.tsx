@@ -183,8 +183,11 @@ export function FirebaseAuthProvider({
         if (mounted) {
           await applySession(user)
         }
-      } catch {
-        await AsyncStorage.removeItem(STORAGE_KEY)
+      } catch (cause) {
+        const message = cause instanceof Error ? cause.message : ''
+        if (message.includes('session expired')) {
+          await AsyncStorage.removeItem(STORAGE_KEY)
+        }
       } finally {
         if (mounted) setIsReady(true)
       }
