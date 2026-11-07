@@ -53,7 +53,7 @@ describe.each([
       })
 
       await api.fetch({cursor: undefined, limit: 10})
-      await api.peekLatest()
+      await expect(api.peekLatest()).resolves.toBeUndefined()
 
       const owned = feed === DISCOVER_FEED_URI
       const headers = {
