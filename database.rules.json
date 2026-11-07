@@ -20,7 +20,7 @@
           ".validate": "newData.isString() && newData.val().length <= 160"
         },
         "avatarUrl": {
-          ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 2048)"
+          ".validate": "!newData.exists() || newData.val() === null || (newData.isString() && newData.val().length <= 2048)"
         },
         "createdAt": {
           ".validate": "newData.isNumber()"
