@@ -145,11 +145,22 @@ jobs:
           grep -Fq "expo-channel-name" "$MANIFEST"
           echo "Android native project contains the EAS update URL and production channel metadata."
 
+      - name: Ensure production EAS Update channel exists
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          set -euo pipefail
+          if pnpm dlx eas-cli@latest channel:view production --json >/dev/null 2>&1; then
+            echo "Production channel already exists."
+          else
+            pnpm dlx eas-cli@latest channel:create production --non-interactive
+          fi
+
       - name: Publish initial Android OTA update
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           EXPO_PUBLIC_FIREBASE_API_KEY: ${{ secrets.EXPO_PUBLIC_FIREBASE_API_KEY }}
-        run: pnpm dlx eas-cli@latest update --channel production --platform android --message "Momento initial OTA setup" --non-interactive
+        run: pnpm dlx eas-cli@latest update --channel production --environment production --platform android --message "Momento initial OTA setup" --non-interactive
 
       - name: Add automatic OTA workflow and commit EAS configuration
         env:
@@ -225,7 +236,7 @@ jobs:
                   env:
                     EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
                     EXPO_PUBLIC_FIREBASE_API_KEY: ${{ secrets.EXPO_PUBLIC_FIREBASE_API_KEY }}
-                  run: pnpm dlx eas-cli@latest update --channel production --platform android --message "Momento OTA ${{ github.sha }}" --non-interactive
+                  run: pnpm dlx eas-cli@latest update --channel production --environment production --platform android --message "Momento OTA ${{ github.sha }}" --non-interactive
           EOF
           # The OTA workflow intentionally ignores this initial configuration commit.
           git config user.name "github-actions[bot]"
