@@ -134,7 +134,6 @@ jobs:
           EAS_PROJECT_ID: ${{ steps.eas.outputs.project_id }}
           CI: "1"
           EXPO_NO_GIT_STATUS: "1"
-          EAS_PROJECT_ID: ${{ steps.eas.outputs.project_id }}
           EXPO_PUBLIC_FIREBASE_API_KEY: ${{ secrets.EXPO_PUBLIC_FIREBASE_API_KEY }}
         run: |
           set -euo pipefail
@@ -241,6 +240,7 @@ jobs:
 
       - name: Start signed release APK build
         env:
+          EAS_PROJECT_ID: ${{ steps.eas.outputs.project_id }}
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
