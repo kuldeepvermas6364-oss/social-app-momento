@@ -1,4 +1,4 @@
-import {View} from 'react-native'
+import {Text, View} from 'react-native'
 import Animated from 'react-native-reanimated'
 import {useSafeAreaInsets} from 'react-native-safe-area-context'
 import {LinearGradient} from 'expo-linear-gradient'
@@ -134,6 +134,27 @@ export function HomeHeaderLayoutMobile({
             )}
           </Layout.Header.Slot>
         </Layout.Header.Outer>
+        <View
+          pointerEvents="none"
+          style={{
+            alignSelf: 'center',
+            marginTop: 2,
+            marginBottom: 6,
+            paddingHorizontal: 11,
+            paddingVertical: 4,
+            borderRadius: 12,
+            backgroundColor: '#EEE9FF',
+          }}>
+          <Text
+            style={{
+              color: '#6335D8',
+              fontSize: 10,
+              fontWeight: '700',
+              letterSpacing: 1.1,
+            }}>
+            MOMENTO · OTA TEST
+          </Text>
+        </View>
         {children}
       </Animated.View>
     </>
