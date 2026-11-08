@@ -2,6 +2,11 @@ name: Configure Momento EAS OTA and start signed APK build
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/momento-eas-ota-setup.yml'
 
 permissions:
   contents: write
