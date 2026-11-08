@@ -133,6 +133,7 @@ jobs:
         env:
           CI: "1"
           EXPO_NO_GIT_STATUS: "1"
+          EAS_PROJECT_ID: ${{ steps.eas.outputs.project_id }}
           EXPO_PUBLIC_FIREBASE_API_KEY: ${{ secrets.EXPO_PUBLIC_FIREBASE_API_KEY }}
         run: |
           set -euo pipefail
