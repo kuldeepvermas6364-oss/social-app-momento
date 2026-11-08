@@ -24,6 +24,7 @@ module.exports = function (_config) {
   const IS_DEV = !IS_TESTFLIGHT && !IS_PRODUCTION
 
   const USE_SENTRY = Boolean(process.env.SENTRY_AUTH_TOKEN)
+  const EAS_PROJECT_ID = 'e71ea555-01a7-48bb-aae5-0191c538481d'
 
   const IOS_ICON_FILE =
     PLATFORM === 'web' // web build doesn't like .icon files
@@ -37,6 +38,7 @@ module.exports = function (_config) {
       version: VERSION,
       name: 'Momento',
       slug: 'momento',
+      owner: 'kuldeep-vermas-team',
       scheme: 'momento',
       runtimeVersion: {
         policy: 'appVersion',
@@ -189,9 +191,13 @@ module.exports = function (_config) {
         favicon: './assets/favicon.png',
       },
       updates: {
-        enabled: false,
-        fallbackToCacheTimeout: 30000,
-        checkAutomatically: 'NEVER',
+        enabled: true,
+        url: `https://u.expo.dev/${EAS_PROJECT_ID}`,
+        fallbackToCacheTimeout: 0,
+        checkAutomatically: 'ON_LOAD',
+        requestHeaders: {
+          'expo-channel-name': 'production',
+        },
       },
       plugins: [
         [
@@ -521,6 +527,7 @@ module.exports = function (_config) {
       ],
       extra: {
         eas: {
+          projectId: EAS_PROJECT_ID,
           build: {
             experimental: {
               ios: {
