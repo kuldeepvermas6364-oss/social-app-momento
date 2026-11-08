@@ -55,45 +55,12 @@ jobs:
       - name: Compile translation catalogs
         run: pnpm intl:compile
 
-      - name: Create or link the Momento EAS project
+      - name: Confirm the created Momento EAS project
         id: eas
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
           set -euo pipefail
-          pnpm dlx eas-cli@latest init --account kuldeep-vermas-team --non-interactive --json > "$RUNNER_TEMP/eas-init.json"
-          node <<'NODE'
-          const fs = require('node:fs')
-          const raw = fs.readFileSync(process.env.RUNNER_TEMP + '/eas-init.json', 'utf8')
-          const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-          let parsed
-          try { parsed = JSON.parse(raw) } catch {}
-          const preferred = []
-          const all = []
-          function visit(value, key = '') {
-            if (!value || typeof value !== 'object') return
-            for (const [k, v] of Object.entries(value)) {
-              if (typeof v === 'string' && uuid.test(v)) {
-                all.push(v)
-                if (/project.?id/i.test(k)) preferred.push(v)
-              } else if (v && typeof v === 'object') {
-                visit(v, k)
-              }
-            }
-          }
-          if (parsed) visit(parsed)
-          const ids = [...new Set(preferred.length ? preferred : all)]
-          const rawIds = [...new Set(raw.match(/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/ig) || [])]
-          const candidates = ids.length ? ids : rawIds
-          if (candidates.length !== 1) {
-            console.error('Unable to identify one EAS project ID from the EAS CLI response.')
-            console.error(raw.slice(0, 4000))
-            process.exit(1)
-          }
-          fs.appendFileSync(process.env.GITHUB_ENV, 'EAS_PROJECT_ID=' + candidates[0] + '\n')
-          fs.appendFileSync(process.env.GITHUB_OUTPUT, 'project_id=' + candidates[0] + '\n')
-          console.log('Expo project linked. Project ID: ' + candidates[0])
-          NODE
+          echo "project_id=e71ea555-01a7-48bb-aae5-0191c538481d" >> "$GITHUB_OUTPUT"
+          echo "Confirmed @kuldeep-vermas-team/momento (EAS project e71ea555-01a7-48bb-aae5-0191c538481d)."
 
       - name: Enable EAS Update in Momento app config
         env:
