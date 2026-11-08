@@ -131,6 +131,7 @@ jobs:
 
       - name: Generate Android native project and verify OTA metadata
         env:
+          EAS_PROJECT_ID: ${{ steps.eas.outputs.project_id }}
           CI: "1"
           EXPO_NO_GIT_STATUS: "1"
           EAS_PROJECT_ID: ${{ steps.eas.outputs.project_id }}
